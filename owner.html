@@ -69,6 +69,15 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
 .paybtns span{font-size:13px;color:var(--slate);font-weight:600;margin-right:2px}
 .mini{min-height:38px;padding:0 12px;border:1.5px solid var(--field);border-radius:999px;background:#fff;font-weight:700;font-size:14px;cursor:pointer}
 .mini:hover{border-color:var(--blue)}
+.pay-row{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap}
+.pay-links{display:flex;gap:14px}
+.refund-line{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap;margin-top:6px;font-size:15px;font-weight:700;color:#B54708}
+.refund-form{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+.refund-form label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--slate)}
+.refund-form input{width:96px;min-height:40px;padding:0 10px;border:1.5px solid var(--field);border-radius:10px;background:#fff;font:inherit;font-size:16px;font-weight:700;color:var(--navy)}
+.tag.refund{background:#EEF1F5;color:var(--slate)}
+.refund-form input{-moz-appearance:textfield;appearance:textfield}
+.refund-form input::-webkit-inner-spin-button,.refund-form input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .setrow p{margin:2px 0 0;font-size:14px;color:var(--slate)}
 .gate{max-width:420px;margin:30px auto 0;display:grid;gap:12px}
@@ -281,10 +290,12 @@ function render() {
 
   const all = data.bookings, live = all.filter((b) => b.status !== "canceled"), done = all.filter((b) => b.status === "done");
   const money = live.reduce((s, b) => s + b.price, 0), salt = live.filter((b) => b.salt).length;
-  const collected = live.filter((b) => b.pay_status === "paid").reduce((s, b) => s + (b.paid_amount || b.price), 0), owed = money - collected;
+  const refunded = all.reduce((s, b) => s + (b.refund_amount || 0), 0);
+  const collected = all.filter((b) => b.pay_status === "paid").reduce((s, b) => s + (b.paid_amount || b.price), 0) - refunded;
+  const owed = live.filter((b) => b.pay_status !== "paid").reduce((s, b) => s + b.price, 0);
   $("#dayTitle").textContent = (day === t ? "Today · " : day === addDays(t, 1) ? "Tomorrow · " : "") + fmt(day, { weekday: "long", month: "short", day: "numeric" });
   $("#daySum").textContent = `${live.length} of ${data.cap} booked · $${money}`;
-  $("#chips").innerHTML = live.length ? [`<span class="tag">${done.length} of ${live.length} done</span>`, `<span class="tag paid">$${collected} collected</span>`, owed ? `<span class="tag due">$${owed} to collect</span>` : "", salt ? `<span class="tag salt">${salt} salt</span>` : "", all.length > live.length ? `<span class="tag">${all.length - live.length} canceled</span>` : ""].join("") : "";
+  $("#chips").innerHTML = live.length ? [`<span class="tag">${done.length} of ${live.length} done</span>`, `<span class="tag paid">$${collected} collected</span>`, owed ? `<span class="tag due">$${owed} to collect</span>` : "", refunded ? `<span class="tag refund">$${refunded} refunded</span>` : "", salt ? `<span class="tag salt">${salt} salt</span>` : "", all.length > live.length ? `<span class="tag">${all.length - live.length} canceled</span>` : ""].join("") : "";
 
   const todo = all.filter((b) => b.status === "booked");
   const rb = $("#routeBtn");
@@ -299,7 +310,7 @@ function render() {
     const addr = [b.street, [b.city, b.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
     const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addr);
     const state = b.status === "done" ? `<div class="state done">Done${b.done_at ? " at " + esc(timeOf(b.done_at).split(", ").pop()) : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Undo</button></div>`
-      : b.status === "canceled" ? `<div class="state">Canceled${b.canceled_by ? " by " + (b.canceled_by === "owner" ? "you" : "the customer") : ""}${b.pay_status === "paid" ? (b.paid_online ? " · was paid online (no refund unless you choose to give one in Stripe)" : ` · was paid ${PAID[b.paid_method] || ""}`) : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Restore</button></div>`
+      : b.status === "canceled" ? `<div class="state">Canceled${b.canceled_by ? " by " + (b.canceled_by === "owner" ? "you" : "the customer") : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Restore</button></div>`
       : `<div class="acts"><a class="btn btn-outline" href="tel:+1${b.phone}"><svg aria-hidden="true"><use href="#phone"></use></svg>Call</a><a class="btn btn-outline" href="sms:+1${b.phone}"><svg aria-hidden="true"><use href="#chat"></use></svg>Text</a><button type="button" class="btn btn-navy" data-id="${b.id}" data-status="done"><svg aria-hidden="true"><use href="#check"></use></svg>Done</button><button type="button" class="link-btn danger" data-id="${b.id}" data-status="canceled">Cancel</button></div>`;
     return `<li class="stop is-${b.status}">
       <span class="num">${i + 1}</span>
@@ -310,7 +321,7 @@ function render() {
         <div class="tags">${b.corner_lot ? `<span class="tag">Corner</span>` : `<span class="tag">Standard</span>`}${b.salt ? `<span class="tag salt">Salt: yes</span>` : `<span class="tag">No salt</span>`}${b.discount ? `<span class="tag off">Next-day −$${b.discount}</span>` : ""}${b.multiplier > 1 ? `<span class="tag late">After 6 PM ×${b.multiplier}</span>` : ""}${b.miles != null ? `<span class="tag">${b.miles} mi</span>` : ""}${b.area_status === "unverified" ? `<span class="tag warn">Check address</span>` : b.area_status === "approx" ? `<span class="tag warn">Distance approx.</span>` : ""}</div>
         ${b.notes ? `<p class="notes">${esc(b.notes)}</p>` : ""}
         ${b.salt ? `<details><summary>Salt note accepted ${esc(timeOf(b.salt_ack_at))}</summary><p>${esc(b.salt_ack_text)}</p></details>` : ""}
-        ${b.status === "canceled" ? "" : payBlock(b)}
+        ${b.status === "canceled" && b.pay_status !== "paid" ? "" : payBlock(b)}
         ${state}
       </div></li>`;
   }).join("") : `<li class="empty">No stops booked for this day.</li>`;
@@ -318,6 +329,32 @@ function render() {
     btn.disabled = true;
     try {
       const r = await api("owner_mark_paid", { id: btn.dataset.paid || btn.dataset.unpay, method: btn.dataset.paid ? btn.dataset.method : null, date: day });
+      data = Object.assign(data, r); render();
+    } catch (e) { btn.disabled = false; $("#dayErr").textContent = e.message; $("#dayErr").hidden = false; }
+  }));
+  for (const [id, v] of openRefunds) {
+    const f = $(`#stops [data-refund-form="${id}"]`);
+    if (f) { f.hidden = false; f.querySelector("input").value = v; } else openRefunds.delete(id);
+  }
+  $$("#stops [data-refund-open]").forEach((btn) => btn.addEventListener("click", () => {
+    const id = btn.dataset.refundOpen, f = $(`#stops [data-refund-form="${id}"]`), inp = f.querySelector("input");
+    f.hidden = !f.hidden;
+    if (f.hidden) openRefunds.delete(id); else { openRefunds.set(id, inp.value); inp.focus(); inp.select(); }
+  }));
+  $$("#stops [data-refund-form] input").forEach((inp) => inp.addEventListener("input", () => openRefunds.set(inp.closest("[data-refund-form]").dataset.refundForm, inp.value)));
+  $$("#stops [data-refund], #stops [data-unrefund]").forEach((btn) => btn.addEventListener("click", async () => {
+    const id = btn.dataset.refund || btn.dataset.unrefund, f = btn.dataset.refund ? $(`#stops [data-refund-form="${id}"]`) : null;
+    let amount = null;
+    if (f) {
+      const inp = f.querySelector("input"), er = f.querySelector(".err"), max = Number(inp.max);
+      amount = Number(inp.value);
+      if (!Number.isInteger(amount) || amount < 1 || amount > max) { er.textContent = `Enter an amount from $1 to $${max}.`; er.hidden = false; inp.focus(); return; }
+      er.hidden = true;
+    }
+    btn.disabled = true;
+    try {
+      const r = await api("owner_mark_refund", { id, method: f ? btn.dataset.method : null, amount, date: day });
+      openRefunds.delete(id);
       data = Object.assign(data, r); render();
     } catch (e) { btn.disabled = false; $("#dayErr").textContent = e.message; $("#dayErr").hidden = false; }
   }));
@@ -331,9 +368,18 @@ function render() {
 }
 const PAID = { card: "Card", cashapp: "Cash App", cash: "Cash", tap: "Tap to pay", other: "Other" };
 const PLAN = { cash: "cash", tap: "tap to pay", cashapp: "Cash App", online: "online" };
+const REFUNDED = { cash: "Cash", cashapp: "Cash App", card: "Card", other: "Other" };
+const openRefunds = new Map();
 function payBlock(b) {
   if (b.pay_status === "paid") {
-    return `<div class="pay paid"><b>Paid · ${esc(PAID[b.paid_method] || "")}${b.paid_online ? " (online)" : ""}</b>${b.paid_online ? "" : `<button type="button" class="link-btn" data-unpay="${b.id}">Undo</button>`}</div>`;
+    const amt = b.paid_amount || b.price;
+    const head = `<b>Paid${amt !== b.price ? " $" + amt : ""} · ${esc(PAID[b.paid_method] || "")}${b.paid_online ? " (online)" : ""}</b>`;
+    if (b.refund_method) {
+      return `<div class="pay paid"><div class="pay-row">${head}</div><div class="refund-line"><span>Refunded $${b.refund_amount} · ${esc(REFUNDED[b.refund_method] || "")}</span><button type="button" class="link-btn" data-unrefund="${b.id}">Undo</button></div></div>`;
+    }
+    return `<div class="pay paid"><div class="pay-row">${head}<span class="pay-links">${b.paid_online ? "" : `<button type="button" class="link-btn" data-unpay="${b.id}">Undo</button>`}<button type="button" class="link-btn" data-refund-open="${b.id}">Refund</button></span></div>`
+      + `<div class="refund-form" data-refund-form="${b.id}" hidden><label>Refund $<input type="number" inputmode="numeric" min="1" max="${amt}" step="1" value="${amt}" aria-label="Refund amount in dollars"></label>`
+      + `<div class="paybtns"><span>Refunded by:</span>${["cash", "cashapp", "card", "other"].map((m) => `<button type="button" class="mini" data-refund="${b.id}" data-method="${m}">${REFUNDED[m]}</button>`).join("")}</div><p class="err" hidden></p></div></div>`;
   }
   const why = b.pay_choice === "now" ? "Needs payment · online checkout not finished" : `Needs payment · plans to pay ${PLAN[b.pay_plan] || "after the job"}`;
   return `<div class="pay due"><b>${esc(why)}</b><div class="paybtns"><span>Mark paid:</span>${["cash", "tap", "cashapp", "card"].map((m) => `<button type="button" class="mini" data-paid="${b.id}" data-method="${m}">${PAID[m]}</button>`).join("")}</div></div>`;
@@ -364,7 +410,7 @@ $("#lkGo").addEventListener("click", async () => {
       <div>${esc([c.street, [c.city, c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "))}</div>
       <div class="muted">${esc(fmtPhone(c.phone))} · customer since ${esc(timeOf(c.created_at).split(",")[0])}</div>
       <div class="tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="tag">${c.corner_lot ? "Corner" : "Standard"}</span>${c.miles != null ? `<span class="tag">${c.miles} mi away</span>` : ""}${c.area_status === "unverified" ? `<span class="tag warn">Address not checked</span>` : ""}${c.locked ? `<span class="tag salt">Locked: too many PIN tries</span>` : ""}</div>
-      ${r.bookings.length ? `<ul>${r.bookings.map((b) => `<li><span>${esc(fmt(b.date, { weekday: "short", month: "short", day: "numeric" }))}${b.salt ? " · salt" : ""}</span><span>$${b.price} · ${b.status}${b.pay_status === "paid" ? ` · paid ${PAID[b.paid_method] || ""}` : ""}</span></li>`).join("")}</ul>` : `<p class="muted">No bookings yet.</p>`}
+      ${r.bookings.length ? `<ul>${r.bookings.map((b) => `<li><span>${esc(fmt(b.date, { weekday: "short", month: "short", day: "numeric" }))}${b.salt ? " · salt" : ""}</span><span>$${b.price} · ${b.status}${b.pay_status === "paid" ? ` · paid ${PAID[b.paid_method] || ""}` : ""}${b.refund_method ? ` · refunded $${b.refund_amount}` : ""}</span></li>`).join("")}</ul>` : `<p class="muted">No bookings yet.</p>`}
       <div class="pinrow"><div><label for="newPin">New PIN for them</label><input id="newPin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off"></div><button class="btn btn-outline" type="button" id="pinGo">Reset PIN</button></div>
       <p class="err" id="pinErr" hidden></p><p class="ok-msg" id="pinOk" hidden></p>
       <div style="margin-top:14px"><button type="button" class="link-btn danger" id="delCust">Delete this customer</button></div>`;
