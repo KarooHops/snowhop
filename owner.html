@@ -58,6 +58,19 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
 .tag.salt{background:#FFF1D6;color:#8A5300}
 .tag.off{background:#E7F6EE;color:var(--ok)}
 .tag.late{background:#FEF0E6;color:#B54708}
+.tag.warn{background:#FEF0E6;color:#B54708}
+.tag.paid{background:#E7F6EE;color:var(--ok)}
+.tag.due{background:#FEF0E6;color:#B54708}
+.pay{margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.pay b{display:block;font-size:15px}
+.pay.paid b{color:var(--ok)}
+.pay.due b{color:#B54708}
+.paybtns{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.paybtns span{font-size:13px;color:var(--slate);font-weight:600;margin-right:2px}
+.mini{min-height:38px;padding:0 12px;border:1.5px solid var(--field);border-radius:999px;background:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.mini:hover{border-color:var(--blue)}
+.setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.setrow p{margin:2px 0 0;font-size:14px;color:var(--slate)}
 .gate{max-width:420px;margin:30px auto 0;display:grid;gap:12px}
 .gate p{margin:0;color:var(--slate)}
 
@@ -175,6 +188,11 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
 
     <h2>Settings</h2>
     <div class="card set">
+      <div class="setrow">
+        <div><b>Online payments</b><p id="payState">Checking…</p></div>
+        <button class="btn btn-outline" type="button" id="payToggle" hidden></button>
+      </div>
+      <p class="err" id="payErr" hidden></p>
       <div>
         <label for="newCode">New owner code</label>
         <input id="newCode" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false" placeholder="At least 8 characters">
@@ -262,9 +280,10 @@ function render() {
 
   const all = data.bookings, live = all.filter((b) => b.status !== "canceled"), done = all.filter((b) => b.status === "done");
   const money = live.reduce((s, b) => s + b.price, 0), salt = live.filter((b) => b.salt).length;
+  const collected = live.filter((b) => b.pay_status === "paid").reduce((s, b) => s + (b.paid_amount || b.price), 0), owed = money - collected;
   $("#dayTitle").textContent = (day === t ? "Today · " : day === addDays(t, 1) ? "Tomorrow · " : "") + fmt(day, { weekday: "long", month: "short", day: "numeric" });
   $("#daySum").textContent = `${live.length} of ${data.cap} booked · $${money}`;
-  $("#chips").innerHTML = live.length ? [`<span class="tag">${done.length} of ${live.length} done</span>`, salt ? `<span class="tag salt">${salt} salt</span>` : "", all.length > live.length ? `<span class="tag">${all.length - live.length} canceled</span>` : ""].join("") : "";
+  $("#chips").innerHTML = live.length ? [`<span class="tag">${done.length} of ${live.length} done</span>`, `<span class="tag paid">$${collected} collected</span>`, owed ? `<span class="tag due">$${owed} to collect</span>` : "", salt ? `<span class="tag salt">${salt} salt</span>` : "", all.length > live.length ? `<span class="tag">${all.length - live.length} canceled</span>` : ""].join("") : "";
 
   const todo = all.filter((b) => b.status === "booked");
   const rb = $("#routeBtn");
@@ -279,7 +298,7 @@ function render() {
     const addr = [b.street, [b.city, b.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
     const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addr);
     const state = b.status === "done" ? `<div class="state done">Done${b.done_at ? " at " + esc(timeOf(b.done_at).split(", ").pop()) : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Undo</button></div>`
-      : b.status === "canceled" ? `<div class="state">Canceled${b.canceled_by ? " by " + (b.canceled_by === "owner" ? "you" : "the customer") : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Restore</button></div>`
+      : b.status === "canceled" ? `<div class="state">Canceled${b.canceled_by ? " by " + (b.canceled_by === "owner" ? "you" : "the customer") : ""}${b.pay_status === "paid" ? (b.paid_online ? " · was paid online, refund it in Stripe" : ` · was paid ${PAID[b.paid_method] || ""}`) : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Restore</button></div>`
       : `<div class="acts"><a class="btn btn-outline" href="tel:+1${b.phone}"><svg aria-hidden="true"><use href="#phone"></use></svg>Call</a><a class="btn btn-outline" href="sms:+1${b.phone}"><svg aria-hidden="true"><use href="#chat"></use></svg>Text</a><button type="button" class="btn btn-navy" data-id="${b.id}" data-status="done"><svg aria-hidden="true"><use href="#check"></use></svg>Done</button><button type="button" class="link-btn danger" data-id="${b.id}" data-status="canceled">Cancel</button></div>`;
     return `<li class="stop is-${b.status}">
       <span class="num">${i + 1}</span>
@@ -287,12 +306,20 @@ function render() {
         <div class="row"><b>${esc(b.name)}</b><span class="price">$${b.price}</span></div>
         <a class="addr" href="${maps}" target="_blank" rel="noopener">${esc(addr)}</a>
         <div class="muted">${esc(fmtPhone(b.phone))}</div>
-        <div class="tags">${b.corner_lot ? `<span class="tag">Corner</span>` : `<span class="tag">Standard</span>`}${b.salt ? `<span class="tag salt">Salt: yes</span>` : `<span class="tag">No salt</span>`}${b.discount ? `<span class="tag off">Next-day −$${b.discount}</span>` : ""}${b.multiplier > 1 ? `<span class="tag late">After 6 PM ×${b.multiplier}</span>` : ""}</div>
+        <div class="tags">${b.corner_lot ? `<span class="tag">Corner</span>` : `<span class="tag">Standard</span>`}${b.salt ? `<span class="tag salt">Salt: yes</span>` : `<span class="tag">No salt</span>`}${b.discount ? `<span class="tag off">Next-day −$${b.discount}</span>` : ""}${b.multiplier > 1 ? `<span class="tag late">After 6 PM ×${b.multiplier}</span>` : ""}${b.miles != null ? `<span class="tag">${b.miles} mi</span>` : ""}${b.area_status === "unverified" ? `<span class="tag warn">Check address</span>` : b.area_status === "approx" ? `<span class="tag warn">Distance approx.</span>` : ""}</div>
         ${b.notes ? `<p class="notes">${esc(b.notes)}</p>` : ""}
         ${b.salt ? `<details><summary>Salt note accepted ${esc(timeOf(b.salt_ack_at))}</summary><p>${esc(b.salt_ack_text)}</p></details>` : ""}
+        ${b.status === "canceled" ? "" : payBlock(b)}
         ${state}
       </div></li>`;
   }).join("") : `<li class="empty">No stops booked for this day.</li>`;
+  $$("#stops [data-paid], #stops [data-unpay]").forEach((btn) => btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    try {
+      const r = await api("owner_mark_paid", { id: btn.dataset.paid || btn.dataset.unpay, method: btn.dataset.paid ? btn.dataset.method : null, date: day });
+      data = Object.assign(data, r); render();
+    } catch (e) { btn.disabled = false; $("#dayErr").textContent = e.message; $("#dayErr").hidden = false; }
+  }));
   $$("#stops [data-status]").forEach((btn) => btn.addEventListener("click", async () => {
     if (btn.dataset.status === "canceled" && !confirmInline(btn)) return;
     btn.disabled = true;
@@ -300,6 +327,15 @@ function render() {
     catch (e) { btn.disabled = false; $("#dayErr").textContent = e.message; $("#dayErr").hidden = false; }
   }));
   $("#updated").textContent = "Updated " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+const PAID = { card: "Card", cashapp: "Cash App", cash: "Cash", tap: "Tap to pay", other: "Other" };
+const PLAN = { cash: "cash", tap: "tap to pay", cashapp: "Cash App", online: "online" };
+function payBlock(b) {
+  if (b.pay_status === "paid") {
+    return `<div class="pay paid"><b>Paid · ${esc(PAID[b.paid_method] || "")}${b.paid_online ? " (online)" : ""}</b>${b.paid_online ? "" : `<button type="button" class="link-btn" data-unpay="${b.id}">Undo</button>`}</div>`;
+  }
+  const why = b.pay_choice === "now" ? "Needs payment · online checkout not finished" : `Needs payment · plans to pay ${PLAN[b.pay_plan] || "after the job"}`;
+  return `<div class="pay due"><b>${esc(why)}</b><div class="paybtns"><span>Mark paid:</span>${["cash", "tap", "cashapp", "card"].map((m) => `<button type="button" class="mini" data-paid="${b.id}" data-method="${m}">${PAID[m]}</button>`).join("")}</div></div>`;
 }
 function confirmInline(btn) {
   if (btn.dataset.sure) return true;
@@ -326,10 +362,18 @@ $("#lkGo").addEventListener("click", async () => {
       <b style="font-size:18px">${esc(c.name)}</b>
       <div>${esc([c.street, [c.city, c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "))}</div>
       <div class="muted">${esc(fmtPhone(c.phone))} · customer since ${esc(timeOf(c.created_at).split(",")[0])}</div>
-      <div class="tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="tag">${c.corner_lot ? "Corner" : "Standard"}</span>${c.locked ? `<span class="tag salt">Locked: too many PIN tries</span>` : ""}</div>
-      ${r.bookings.length ? `<ul>${r.bookings.map((b) => `<li><span>${esc(fmt(b.date, { weekday: "short", month: "short", day: "numeric" }))}${b.salt ? " · salt" : ""}</span><span>$${b.price} · ${b.status}</span></li>`).join("")}</ul>` : `<p class="muted">No bookings yet.</p>`}
+      <div class="tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="tag">${c.corner_lot ? "Corner" : "Standard"}</span>${c.miles != null ? `<span class="tag">${c.miles} mi away</span>` : ""}${c.area_status === "unverified" ? `<span class="tag warn">Address not checked</span>` : ""}${c.locked ? `<span class="tag salt">Locked: too many PIN tries</span>` : ""}</div>
+      ${r.bookings.length ? `<ul>${r.bookings.map((b) => `<li><span>${esc(fmt(b.date, { weekday: "short", month: "short", day: "numeric" }))}${b.salt ? " · salt" : ""}</span><span>$${b.price} · ${b.status}${b.pay_status === "paid" ? ` · paid ${PAID[b.paid_method] || ""}` : ""}</span></li>`).join("")}</ul>` : `<p class="muted">No bookings yet.</p>`}
       <div class="pinrow"><div><label for="newPin">New PIN for them</label><input id="newPin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off"></div><button class="btn btn-outline" type="button" id="pinGo">Reset PIN</button></div>
-      <p class="err" id="pinErr" hidden></p><p class="ok-msg" id="pinOk" hidden></p>`;
+      <p class="err" id="pinErr" hidden></p><p class="ok-msg" id="pinOk" hidden></p>
+      <div style="margin-top:14px"><button type="button" class="link-btn danger" id="delCust">Delete this customer</button></div>`;
+    $("#delCust").addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget;
+      if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "Tap again to delete them and their bookings"; return; }
+      btn.disabled = true;
+      try { await api("owner_delete_customer", { phone: ph }); box.innerHTML = `<p class="ok-msg">Customer deleted.</p>`; loadDay(true); }
+      catch (e) { btn.disabled = false; $("#pinErr").textContent = e.message; $("#pinErr").hidden = false; }
+    });
     $("#newPin").addEventListener("input", (e) => { e.target.value = digits(e.target.value).slice(0, 4); });
     $("#pinGo").addEventListener("click", async () => {
       const pin = $("#newPin").value, pe = $("#pinErr"), po = $("#pinOk");
@@ -371,9 +415,25 @@ $("#setGo").addEventListener("click", async () => {
 });
 $("#signOut").addEventListener("click", () => lock(""));
 
+function renderPayments(p) {
+  $("#payState").textContent = p.enabled ? "On. Customers can pay by card, Apple Pay or Cash App when they book."
+    : p.key_set ? "Off. Customers pay after the job." : "Off. Add your Stripe key in Supabase to turn this on.";
+  const t = $("#payToggle");
+  t.hidden = !p.key_set;
+  t.textContent = p.enabled ? "Turn off" : "Turn on";
+  t.dataset.on = p.enabled ? "1" : "";
+}
+async function loadPayments() { try { renderPayments(await api("owner_payments")); } catch (e) { /* shown elsewhere */ } }
+$("#payToggle").addEventListener("click", async () => {
+  const t = $("#payToggle"), er = $("#payErr");
+  t.disabled = true; er.hidden = true;
+  try { renderPayments(await api(t.dataset.on ? "owner_payments_off" : "owner_payments_setup")); }
+  catch (e) { er.textContent = e.message; er.hidden = false; }
+  t.disabled = false;
+});
 function start() {
   $("#gate").hidden = true; $("#app").hidden = false;
-  loadDay(); loadReviews();
+  loadDay(); loadReviews(); loadPayments();
   clearInterval(timer);
   timer = setInterval(() => { if (!document.hidden && code) loadDay(true); }, 60000);
 }

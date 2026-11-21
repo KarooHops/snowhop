@@ -276,6 +276,16 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
 .check{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1.5px solid var(--field);border-radius:14px;cursor:pointer;font-weight:600;font-size:15px}
 .check input{width:22px;height:22px;margin:0;accent-color:var(--blue);flex:none}
 .check:has(input:checked){border-color:var(--blue);background:var(--tint)}
+.pay-box{margin:20px 0 0;display:grid;gap:10px}
+.pay-opts{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr))}
+.pay-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:13px 15px;border:1.5px solid var(--field);border-radius:14px;background:#fff;cursor:pointer;text-align:left}
+.pay-opt b{font-size:16px}
+.pay-opt small{color:var(--slate);font-size:14px}
+.pay-opt[aria-checked=true]{border-color:var(--blue);background:var(--tint);box-shadow:0 0 0 1px var(--blue)}
+.pay-plan{display:grid;gap:8px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 16px;border:1.5px solid var(--field);border-radius:999px;background:#fff;font-weight:600;cursor:pointer}
+.chip[aria-checked=true]{border-color:var(--blue);background:var(--tint);color:var(--blue)}
 .summary{background:var(--bg);border-radius:16px;padding:16px;margin-top:20px}
 .summary h3{margin:0 0 10px;font-size:16px}
 .summary dl{margin:0;display:grid;gap:8px}
@@ -303,6 +313,10 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
 .visit b{display:block}
 .visit span{color:var(--slate);font-size:14px}
 .visit .vn{display:block;color:var(--slate);font-size:14px;margin-top:2px;white-space:pre-line}
+.visit .vp{display:block;font-size:14px;color:var(--slate);margin-top:2px}
+.visit .vp.due{color:#B54708;font-weight:600}
+.visit .vp.ok{color:var(--ok);font-weight:600}
+.visit .vp .link-btn{padding:0;font-size:14px}
 .visit.past{background:var(--bg);border-color:transparent}
 .visit .st{font-size:13px;font-weight:700;color:var(--slate);white-space:nowrap}
 .visit .st.done{color:var(--ok)}
@@ -354,6 +368,8 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
   <symbol id="user" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z"/></symbol>
   <symbol id="x" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" d="M6 6l12 12M18 6 6 18"/></symbol>
   <symbol id="back" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></g></symbol>
+  <symbol id="card" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></g></symbol>
   <symbol id="clock" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2"/></symbol>
   <symbol id="warn" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g></symbol>
@@ -406,7 +422,9 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
         <div class="price"><span class="amt">$10 off</span><h3>Next-day clean-up</h3><p>Booked the day after a visit? That visit is $10 off.</p></div>
       </div>
       <div class="notes">
-        <p class="note"><svg aria-hidden="true"><use href="#clock"></use></svg><span>Each visit takes <b>15 minutes to an hour</b>, depending on how deep the snow is and the size of your lot.</span></p>
+        <p class="note"><svg aria-hidden="true"><use href="#clock"></use></svg><span><b>Any time on the day you book</b>, 12 AM to 11:59 PM. Each visit takes 15 minutes to an hour, depending on how deep the snow is and the size of your lot.</span></p>
+        <p class="note"><svg aria-hidden="true"><use href="#pin"></use></svg><span>Serving homes within <b>10 miles of Highlands Ranch</b>.</span></p>
+        <p class="note" id="payNote"><svg aria-hidden="true"><use href="#card"></use></svg><span>Pay after the job with cash, tap to pay or Cash App.</span></p>
         <p class="note"><svg aria-hidden="true"><use href="#i-moon"></use></svg><span><b>Booking for tonight?</b> Same-day visits booked between 6 PM and midnight are double the price.</span></p>
         <p class="note salt"><svg aria-hidden="true"><use href="#flake"></use></svg><span><b>Salting is optional and free.</b> Ethan only salts if you ask for it when you book. Salt can harm grass and plants, so he keeps it off lawn edges.</span></p>
       </div>
@@ -438,7 +456,7 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
       <p class="sub">Three steps and your driveway's done.</p>
       <ol class="steps">
         <li><span class="num">1</span><div><b>Book a day</b><p>Pick a day online. Up to 10 driveways a day.</p></div></li>
-        <li><span class="num">2</span><div><b>Ethan clears it</b><p>Driveway and sidewalk, plus free salt if you asked for it.</p></div></li>
+        <li><span class="num">2</span><div><b>Ethan clears it</b><p>Any time that day, 12 AM to 11:59 PM. Driveway and sidewalk, plus free salt if you asked.</p></div></li>
         <li><span class="num">3</span><div><b>Snows again?</b><p>Book the next day too and that visit is $10 off.</p></div></li>
       </ol>
     </div>
@@ -554,7 +572,7 @@ const S = {
 };
 function freshDraft(prev) {
   const saved = (() => { try { return JSON.parse(store.get("snowhop:details") || "{}"); } catch (e) { return {}; } })();
-  return Object.assign({ name: "", phone: "", street: "", city: "", zip: "", corner: null, date: null, salt: false, saltAck: false, notes: "", pin: "", x_hp: "" }, saved, prev || {});
+  return Object.assign({ name: "", phone: "", street: "", city: "", zip: "", corner: null, date: null, salt: false, saltAck: false, notes: "", pin: "", x_hp: "", payChoice: null, payPlan: null }, saved, prev || {});
 }
 function saveDetails() {
   const d = S.draft;
@@ -588,6 +606,12 @@ function quote(date) {
   return { base, off, mult, price: (base - off) * mult, corner };
 }
 const lateTime = () => hourLabel((S.avail && S.avail.late_hour) || 18);
+const radius = () => (S.avail && S.avail.radius_miles) || 10;
+const payOn = () => !!(S.avail && S.avail.payments_enabled);
+const PLANS = [["cash", "Cash"], ["tap", "Tap to pay"], ["cashapp", "Cash App"], ["online", "Online later"]];
+const PLAN_LABEL = Object.fromEntries(PLANS);
+const PAID_LABEL = { card: "Card", cashapp: "Cash App", cash: "Cash", tap: "Tap to pay", other: "Other" };
+const outOfArea = (miles) => `Sorry, SnowHop only serves homes within ${radius()} miles of Highlands Ranch${miles ? `, and that address is about ${Math.round(miles)} miles away` : ""}.`;
 
 // ---- spots left today ----
 async function loadAvailability() {
@@ -602,6 +626,9 @@ async function loadAvailability() {
   return S.avail;
 }
 function renderSpots() {
+  $("#payNote span").textContent = payOn()
+    ? "Pay online when you book (card, Apple Pay or Cash App), or after the job with cash, tap to pay or Cash App."
+    : "Pay after the job with cash, tap to pay or Cash App.";
   const a = S.avail, el = $("#spots");
   if (!a || !a.days || !a.days.length) { el.hidden = true; return; }
   const t = a.days[0], tm = a.days[1];
@@ -720,7 +747,7 @@ function checkProfile() {
 const VIEWS = {
   info() {
     sBody.innerHTML = `
-      <p class="intro">Ethan uses this to find your house and reach you. It also sets up your SnowHop account.</p>
+      <p class="intro">Ethan uses this to find your house and reach you. It also sets up your SnowHop account. SnowHop serves homes within ${radius()} miles of Highlands Ranch.</p>
       <div class="fields">
         ${field("name", "Your name", "text", { autocomplete: "name", maxlength: 80 })}
         ${field("phone", "Mobile number", "tel", { autocomplete: "tel-national", inputmode: "tel", maxlength: 16 })}
@@ -735,7 +762,17 @@ const VIEWS = {
     bindFields();
     $("#toSignin").addEventListener("click", () => { S.afterSignIn = "book"; show("signin"); });
     foot(`<button class="btn btn-navy btn-block" type="button" id="go">Next</button>`);
-    $("#go").addEventListener("click", () => { if (checkProfile()) { saveDetails(); next(); } });
+    $("#go").addEventListener("click", async () => {
+      if (!checkProfile()) return;
+      saveDetails();
+      const go = $("#go");
+      showErr(""); busy(go, true, "Checking your address…");
+      try {
+        const r = await api("check_area", { street: S.draft.street, city: S.draft.city, zip: S.draft.zip });
+        if (r.status === "out") { busy(go, false); showErr(outOfArea(r.miles)); return; }
+      } catch (e) { /* checked again when the account is made */ }
+      next();
+    });
   },
 
   corner() {
@@ -815,6 +852,7 @@ const VIEWS = {
 
   finish() {
     const isNew = !S.token;
+    if (!payOn() && S.draft.payChoice !== "later") { S.draft.payChoice = "later"; if (S.draft.payPlan === "online") S.draft.payPlan = null; }
     const d = S.draft, notice = (S.avail && S.avail.salt_notice) || "Salt can harm grass, plants and concrete less than a year old.";
     sBody.innerHTML = `
       <div class="opt${d.salt ? " on" : ""}" id="saltBox">
@@ -832,6 +870,18 @@ const VIEWS = {
         ${field("notes", `Notes for ${esc(OWNER)}`, "textarea", { maxlength: 500, placeholder: "Gate code, where to pile the snow, cars in the driveway…" }, "optional")}
         ${isNew ? field("pin", "Create a 4-digit PIN", "password", { inputmode: "numeric", pattern: "[0-9]*", maxlength: 4, autocomplete: "new-password", class: "pin" }, "", `You'll use your phone number and this PIN to see or change your bookings. Forgot it? Text ${esc(OWNER)}.`) : ""}
       </div>
+      <div class="pay-box">
+        <span class="legend" id="payLbl">How do you want to pay?</span>
+        <div class="pay-opts" role="radiogroup" aria-labelledby="payLbl">
+          ${payOn() ? `<button type="button" role="radio" class="pay-opt" data-pay="now" aria-checked="${d.payChoice === "now"}"><b>Pay now</b><small>Card, Apple Pay or Cash App</small></button>` : ""}
+          <button type="button" role="radio" class="pay-opt" data-pay="later" aria-checked="${d.payChoice === "later"}"><b>Pay after the job</b><small>Cash, tap to pay or Cash App</small></button>
+        </div>
+        <div class="pay-plan" id="payPlan" ${d.payChoice === "later" ? "" : "hidden"}>
+          <span class="legend" id="planLbl">How will you pay?</span>
+          <div class="chips" role="radiogroup" aria-labelledby="planLbl">${PLANS.filter(([k]) => payOn() || k !== "online").map(([k, l]) => `<button type="button" role="radio" class="chip" data-plan="${k}" aria-checked="${d.payPlan === k}">${l}</button>`).join("")}</div>
+        </div>
+        <p class="err" id="e-pay" hidden></p>
+      </div>
       <div class="summary" id="summary"></div>`;
     bindFields();
     const salt = $("#f-salt"), ack = $("#f-saltAck");
@@ -840,14 +890,16 @@ const VIEWS = {
       const addr = [c.street, [c.city, c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
       $("#summary").innerHTML = `<h3>Your visit</h3><dl>
         <div><dt>Day</dt><dd>${esc(longDay(d.date))}</dd></div>
+        <div><dt>When</dt><dd>Any time that day</dd></div>
         <div><dt>Address</dt><dd>${esc(addr)}</dd></div>
         <div><dt>Lot</dt><dd>${q.corner ? "Corner house" : "Standard"}</dd></div>
         <div><dt>Salting</dt><dd>${d.salt ? "Yes, free" : "No"}</dd></div>
+        <div><dt>Payment</dt><dd>${d.payChoice === "now" ? "Pay now online" : d.payChoice === "later" ? (d.payPlan ? `After the job · ${PLAN_LABEL[d.payPlan]}` : "After the job") : "Choose above"}</dd></div>
         ${q.off ? `<div><dt>Next-day clean-up</dt><dd>−$${q.off}</dd></div>` : ""}
         ${q.mult > 1 ? `<div><dt>Same-day after ${lateTime()}</dt><dd>×${q.mult}</dd></div>` : ""}
         <div class="total"><dt>Price</dt><dd>${q.off && q.mult === 1 ? `<s>$${q.base}</s>` : ""}$${q.price}</dd></div></dl>
-        <p class="fine">Takes 15 minutes to an hour, depending on how much snow there is and your lot size. Nothing to pay online.</p>`;
-      $("#go").textContent = `Book my visit · $${q.price}`;
+        <p class="fine">${esc(OWNER)} comes any time that day, 12 AM to 11:59 PM. Each visit takes 15 minutes to an hour, depending on the snow and your lot size.</p>`;
+      $("#go").textContent = `${d.payChoice === "now" ? "Book & pay" : "Book my visit"} · $${q.price}`;
     };
     salt.addEventListener("change", () => {
       d.salt = salt.checked; if (!d.salt) { d.saltAck = false; ack.checked = false; }
@@ -856,6 +908,14 @@ const VIEWS = {
     ack.addEventListener("change", () => { d.saltAck = ack.checked; setErr("saltAck", ""); });
     foot(`<button class="btn btn-navy btn-block" type="button" id="go">Book my visit</button>`);
     $("#go").addEventListener("click", submitBooking);
+    const paintPay = () => {
+      $$(".pay-opt", sBody).forEach((x) => x.setAttribute("aria-checked", String(x.dataset.pay === d.payChoice)));
+      $("#payPlan").hidden = d.payChoice !== "later";
+      $$(".chip[data-plan]", sBody).forEach((x) => x.setAttribute("aria-checked", String(x.dataset.plan === d.payPlan)));
+      setErr("pay", "");
+    };
+    $$(".pay-opt", sBody).forEach((x) => x.addEventListener("click", () => { d.payChoice = x.dataset.pay; if (d.payChoice === "now") d.payPlan = null; paintPay(); paint(); }));
+    $$(".chip[data-plan]", sBody).forEach((x) => x.addEventListener("click", () => { d.payPlan = x.dataset.plan; paintPay(); paint(); }));
     paint();
   },
 
@@ -867,7 +927,10 @@ const VIEWS = {
         <h3>You're booked!</h3>
         <p class="big">${esc(longDay(b.date))}</p>
         <p>${esc(b.street)} · $${b.price}${b.salt ? " · free salting" : ""}</p>
+        <p>${b.pay_choice === "later" ? `Pay after the job${b.pay_plan ? ` · ${esc(PLAN_LABEL[b.pay_plan])}` : ""}` : "Paying online"}</p>
       </div>
+      ${S.payNote ? `<p class="form-error" style="margin:0 0 14px">${esc(S.payNote)}</p>` : ""}
+      <p class="fine" style="text-align:center">${esc(OWNER)} will clear it any time that day, 12 AM to 11:59 PM.</p>
       <p class="fine" style="text-align:center">Questions or changes? Call or text ${esc(OWNER)} at <a href="${telHref}">${esc(fmtPhone(cfg.phone))}</a>, or cancel from My visits.</p>`;
     foot(`<div class="foot-row"><button class="btn btn-outline btn-block" type="button" id="toAcct">My visits</button><button class="btn btn-navy btn-block" type="button" id="go">Done</button></div>`);
     $("#toAcct").addEventListener("click", () => { S.flow = null; show("account"); });
@@ -918,9 +981,12 @@ const VIEWS = {
     const c = S.me.customer, t = S.me.today || today(), p = pricing();
     const upcoming = S.me.bookings.filter((b) => b.status === "booked" && b.date >= t).sort((x, y) => x.date.localeCompare(y.date));
     const past = S.me.bookings.filter((b) => !(b.status === "booked" && b.date >= t)).slice(0, 8);
+    const payLine = (b) => b.status === "canceled" ? ""
+      : b.pay_status === "paid" ? `<span class="vp ok">Paid${b.paid_method ? ` · ${PAID_LABEL[b.paid_method]}` : ""}</span>`
+      : `<span class="vp${b.pay_choice === "now" ? " due" : ""}">${b.pay_choice === "now" ? "Not paid yet" : `Pay after the job${b.pay_plan ? ` · ${PLAN_LABEL[b.pay_plan]}` : ""}`}${payOn() ? ` · <button type="button" class="link-btn" data-pay-id="${b.id}">Pay $${b.price} now</button>` : ""}</span>`;
     const visit = (b, isPast) => `<li class="visit${isPast ? " past" : ""}" data-id="${b.id}">
-        <div><b>${esc(shortDay(b.date))}</b><span>$${b.price}${b.discount ? ` (next-day, $${b.discount} off)` : ""}${b.multiplier > 1 ? ` (after ${lateTime()}, ×${b.multiplier})` : ""} · ${b.salt ? "Free salting" : "No salt"}</span>${b.notes && !isPast ? `<span class="vn">${esc(b.notes)}</span>` : ""}</div>
-        ${isPast ? `<span class="st ${b.status}">${b.status === "done" ? "Done" : b.status === "canceled" ? "Canceled" : "Past"}</span>` : `<button type="button" class="cancel-btn" data-cancel="${b.id}">Cancel</button>`}
+        <div><b>${esc(shortDay(b.date))}</b><span>$${b.price}${b.discount ? ` (next-day, $${b.discount} off)` : ""}${b.multiplier > 1 ? ` (after ${lateTime()}, ×${b.multiplier})` : ""} · ${b.salt ? "Free salting" : "No salt"}</span>${payLine(b)}${b.notes && !isPast ? `<span class="vn">${esc(b.notes)}</span>` : ""}</div>
+        ${isPast ? `<span class="st ${b.status}">${b.status === "done" ? "Done" : b.status === "canceled" ? "Canceled" : "Past"}</span>` : b.pay_status === "paid" ? "" : `<button type="button" class="cancel-btn" data-cancel="${b.id}">Cancel</button>`}
       </li>`;
     sBody.innerHTML = `
       ${S.notice ? `<p class="form-ok">${esc(S.notice)}</p>` : ""}
@@ -943,6 +1009,11 @@ const VIEWS = {
     });
     const rv = $("#toReview"); if (rv) rv.addEventListener("click", () => show("review"));
     $("#signOut").addEventListener("click", async () => { const tk = S.token; forgetSession(); closeSheet(); try { await api("logout", { token: tk }); } catch (e) { /* already gone */ } });
+    $$("[data-pay-id]", sBody).forEach((btn) => btn.addEventListener("click", async () => {
+      busy(btn, true, "Opening…");
+      try { location.href = (await api("pay", { token: S.token, id: btn.dataset.payId })).url; }
+      catch (e) { busy(btn, false); showErr(e.message); }
+    }));
     $$("[data-cancel]", sBody).forEach((btn) => btn.addEventListener("click", () => {
       const holder = document.createElement("div");
       holder.className = "confirm";
@@ -1028,6 +1099,11 @@ const VIEWS = {
 async function submitBooking() {
   const d = S.draft, go = $("#go");
   if (d.salt && !d.saltAck) { setErr("saltAck", "Check the box to add salting, or turn salting off."); $("#f-saltAck").focus(); return; }
+  if (!d.payChoice || (d.payChoice === "later" && !d.payPlan)) {
+    setErr("pay", !d.payChoice ? "Pick how you'd like to pay." : "Pick how you'll pay after the job.");
+    $("#e-pay").scrollIntoView({ block: "center" });
+    return;
+  }
   if (!S.token && !setErr("pin", /^\d{4}$/.test(d.pin) ? "" : "Pick 4 numbers for your PIN.")) { $("#f-pin").focus(); return; }
   showErr(""); busy(go, true, "Booking…");
   try {
@@ -1036,18 +1112,37 @@ async function submitBooking() {
       d.pin = "";
       S.flow = { steps: ["day", "finish"], i: 1 };
     }
-    const r = await api("book", { token: S.token, date: d.date, salt: d.salt, salt_ack: d.salt && d.saltAck, notes: d.notes, quoted_price: quote(d.date).price });
+    const r = await api("book", { token: S.token, date: d.date, salt: d.salt, salt_ack: d.salt && d.saltAck, notes: d.notes, quoted_price: quote(d.date).price,
+      pay_choice: d.payChoice, pay_plan: d.payChoice === "later" ? d.payPlan : null });
     setMe(r);
     S.lastBooking = r.booking;
+    const payNow = d.payChoice === "now";
     S.draft = freshDraft();
     loadAvailability();
     S.flow = null;
+    S.payNote = "";
+    if (payNow) {
+      try {
+        busy(go, true, "Opening payment…");
+        const p = await api("pay", { token: S.token, id: r.booking.id });
+        location.href = p.url;
+        return;
+      } catch (e) {
+        S.payNote = "Your visit is booked, but the payment page didn't open. You can pay from My visits, or after the job.";
+      }
+    }
     show("done");
   } catch (e) {
     busy(go, false);
     if (e.code === "phone_taken") {
       showErr(e.message, `That number already has an account. <button type="button" class="link-btn" id="errSignin">Sign in with your PIN</button> to finish booking.`);
       $("#errSignin").addEventListener("click", () => { S.afterSignIn = "finish"; show("signin"); });
+    } else if (e.code === "out_of_area") {
+      showErr(outOfArea());
+    } else if (e.code === "pay_choice" || e.code === "payments_off") {
+      await loadAvailability();
+      if (S.flow) { S.flow.i = S.flow.steps.indexOf("finish"); show("finish"); }
+      showErr("Online payment isn't available right now. Choose to pay after the job.");
     } else if (e.code === "price_changed") {
       await loadAvailability();
       if (S.flow) { S.flow.i = S.flow.steps.indexOf("finish"); show("finish"); }
@@ -1257,7 +1352,24 @@ api("reviews").then((r) => { S.reviews = r; renderReviews(); }).catch(() => {});
 if (S.token) api("me", { token: S.token }).then(setMe).catch(() => {});
 loadWeather();
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - (S.availAt || 0) > 120000) loadAvailability(); });
-if (location.hash === "#book") startBooking();
+const qs = new URLSearchParams(location.search), paidId = qs.get("paid"), unpaidId = qs.get("unpaid");
+async function watchPayment(id) {
+  for (let i = 0; i < 6; i++) {
+    await new Promise((r) => setTimeout(r, 2500));
+    try {
+      const r = await api("me", { token: S.token });
+      setMe(r);
+      if (S.view === "account") { S.notice = "Thanks! Your payment went through."; VIEWS.account(); }
+      if ((r.bookings || []).some((b) => b.id === id && b.pay_status === "paid")) return;
+    } catch (e) { return; }
+  }
+}
+if ((paidId || unpaidId) && S.token) {
+  history.replaceState(null, "", location.pathname);
+  S.notice = paidId ? "Thanks! Your payment went through." : "Payment wasn't finished. You can pay any time from here, or after the job.";
+  show("account");
+  if (paidId) watchPayment(paidId);
+} else if (location.hash === "#book") startBooking();
 else if (location.hash === "#account") show(S.token ? "account" : "signin");
 })();
 </script>
