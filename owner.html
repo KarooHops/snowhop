@@ -57,6 +57,7 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
 .tag{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;border-radius:999px;padding:3px 9px;background:var(--tint);color:var(--blue);white-space:nowrap}
 .tag.salt{background:#FFF1D6;color:#8A5300}
 .tag.off{background:#E7F6EE;color:var(--ok)}
+.tag.late{background:#FEF0E6;color:#B54708}
 .gate{max-width:420px;margin:30px auto 0;display:grid;gap:12px}
 .gate p{margin:0;color:var(--slate)}
 
@@ -286,7 +287,7 @@ function render() {
         <div class="row"><b>${esc(b.name)}</b><span class="price">$${b.price}</span></div>
         <a class="addr" href="${maps}" target="_blank" rel="noopener">${esc(addr)}</a>
         <div class="muted">${esc(fmtPhone(b.phone))}</div>
-        <div class="tags">${b.corner_lot ? `<span class="tag">Corner</span>` : `<span class="tag">Standard</span>`}${b.salt ? `<span class="tag salt">Salt: yes</span>` : `<span class="tag">No salt</span>`}${b.discount ? `<span class="tag off">Next-day −$${b.discount}</span>` : ""}</div>
+        <div class="tags">${b.corner_lot ? `<span class="tag">Corner</span>` : `<span class="tag">Standard</span>`}${b.salt ? `<span class="tag salt">Salt: yes</span>` : `<span class="tag">No salt</span>`}${b.discount ? `<span class="tag off">Next-day −$${b.discount}</span>` : ""}${b.multiplier > 1 ? `<span class="tag late">After 6 PM ×${b.multiplier}</span>` : ""}</div>
         ${b.notes ? `<p class="notes">${esc(b.notes)}</p>` : ""}
         ${b.salt ? `<details><summary>Salt note accepted ${esc(timeOf(b.salt_ack_at))}</summary><p>${esc(b.salt_ack_text)}</p></details>` : ""}
         ${state}
