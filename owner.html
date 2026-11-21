@@ -108,6 +108,26 @@ h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
 .tag.refund{background:#EEF1F5;color:var(--slate)}
 .refund-form input{-moz-appearance:textfield;appearance:textfield}
 .refund-form input::-webkit-inner-spin-button,.refund-form input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.tag.credit{background:#E7F6EE;color:var(--ok)}
+.pay .sub{display:block;margin-top:2px;font-size:13px;font-weight:600;color:var(--slate)}
+.state .cr-note{color:var(--ok);white-space:nowrap}
+.del-note{display:block;margin-top:2px;font-size:13px;font-weight:600;color:var(--err)}
+.cr{margin-top:16px;padding:14px;border:1px solid #ABEFC6;background:#F3FBF6;border-radius:14px}
+.cr-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.cr-top span{font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--ok)}
+.cr-top b{font-family:var(--display);font-weight:800;font-size:28px;line-height:1}
+.cr-form{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.cr-form > div{flex:1 1 180px;min-width:0}
+.cr-form > div.cr-amt{flex:0 0 120px}
+.cr-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.cr details{margin-top:12px}
+.cr summary{cursor:pointer;font-weight:600;color:var(--blue);font-size:15px}
+.cr ul{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:6px}
+.cr li{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;background:#fff;border-radius:10px;padding:8px 12px}
+.cr li small{display:block;color:var(--slate);font-size:12.5px}
+.cr li b{white-space:nowrap}
+.cr li b.plus{color:var(--ok)}
+.cust li .lk-day{padding:0;font-weight:600}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .setrow p{margin:2px 0 0;font-size:14px;color:var(--slate)}
 .gate{max-width:420px;margin:30px auto 0;display:grid;gap:12px}
@@ -255,6 +275,7 @@ h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
 "use strict";
 const cfg = Object.assign({}, window.SNOWHOP || {});
 const API = cfg.apiUrl || cfg.bookingUrl;
+const CREDIT_API = cfg.creditUrl || String(API).replace(/snow-book\/?$/, "snow-credit");
 const TZ = cfg.timezone || "America/Denver";
 const KEY = "snowhop:owner";
 const $ = (s, el = document) => el.querySelector(s);
@@ -283,6 +304,7 @@ async function api(action, extra, url) {
   }
   return body;
 }
+const capi = (action, extra) => api(action, extra, CREDIT_API);
 function lock(msg) {
   code = null; store.set(KEY, null); clearInterval(timer);
   $("#app").hidden = true; $("#gate").hidden = false;
@@ -327,11 +349,12 @@ function render() {
   const all = data.bookings, live = all.filter((b) => b.status !== "canceled"), done = all.filter((b) => b.status === "done");
   const money = live.reduce((s, b) => s + b.price, 0), salt = live.filter((b) => b.salt).length;
   const refunded = all.reduce((s, b) => s + (b.refund_amount || 0), 0);
-  const collected = all.filter((b) => b.pay_status === "paid").reduce((s, b) => s + (b.paid_amount || b.price), 0) - refunded;
-  const owed = live.filter((b) => b.pay_status !== "paid").reduce((s, b) => s + b.price, 0);
+  const collected = all.reduce((s, b) => s + paidMoney(b), 0) - refunded;
+  const owed = live.filter((b) => b.pay_status !== "paid").reduce((s, b) => s + b.price - (b.credit_used || 0), 0);
+  const byCredit = live.reduce((s, b) => s + (b.credit_used || 0), 0);
   $("#dayTitle").textContent = (day === t ? "Today · " : day === addDays(t, 1) ? "Tomorrow · " : "") + fmt(day, { weekday: "long", month: "short", day: "numeric" });
   $("#daySum").textContent = `${live.length} of ${data.cap} booked · $${money}`;
-  $("#chips").innerHTML = live.length ? [`<span class="tag">${done.length} of ${live.length} done</span>`, `<span class="tag paid">$${collected} collected</span>`, owed ? `<span class="tag due">$${owed} to collect</span>` : "", refunded ? `<span class="tag refund">$${refunded} refunded</span>` : "", salt ? `<span class="tag salt">${salt} salt</span>` : "", all.length > live.length ? `<span class="tag">${all.length - live.length} canceled</span>` : ""].join("") : "";
+  $("#chips").innerHTML = live.length ? [`<span class="tag">${done.length} of ${live.length} done</span>`, `<span class="tag paid">$${collected} collected</span>`, byCredit ? `<span class="tag credit">$${byCredit} paid by credit</span>` : "", owed ? `<span class="tag due">$${owed} to collect</span>` : "", refunded ? `<span class="tag refund">$${refunded} refunded</span>` : "", salt ? `<span class="tag salt">${salt} salt</span>` : "", all.length > live.length ? `<span class="tag">${all.length - live.length} canceled</span>` : ""].join("") : "";
 
   const todo = all.filter((b) => b.status === "booked");
   const rb = $("#routeBtn");
@@ -345,16 +368,19 @@ function render() {
   $("#stops").innerHTML = all.length ? all.map((b, i) => {
     const addr = [b.street, [b.city, b.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
     const maps = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(addr);
-    const state = b.status === "done" ? `<div class="state done">Done${b.done_at ? " at " + esc(timeOf(b.done_at).split(", ").pop()) : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Undo</button></div>`
-      : b.status === "canceled" ? `<div class="state">Canceled${b.canceled_by ? " by " + (b.canceled_by === "owner" ? "you" : "the customer") : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Restore</button></div>`
-      : `<div class="acts"><a class="btn btn-outline" href="tel:+1${b.phone}"><svg aria-hidden="true"><use href="#phone"></use></svg>Call</a><a class="btn btn-outline" href="sms:+1${b.phone}"><svg aria-hidden="true"><use href="#chat"></use></svg>Text</a><button type="button" class="btn btn-navy" data-id="${b.id}" data-status="done"><svg aria-hidden="true"><use href="#check"></use></svg>Done</button><button type="button" class="link-btn danger" data-id="${b.id}" data-status="canceled">Cancel</button></div>`;
+    const del = `<button type="button" class="link-btn danger" data-del="${b.id}">Delete</button>`;
+    const back = backOf(b);
+    const state = b.status === "done" ? `<div class="state done">Done${b.done_at ? " at " + esc(timeOf(b.done_at).split(", ").pop()) : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Undo</button> · ${del}</div>`
+      : b.status === "canceled" ? `<div class="state">Canceled${b.canceled_by ? " by " + (b.canceled_by === "owner" ? "you" : "the customer") : ""}${b.cancel_credit > 0 ? ` · <span class="cr-note">$${b.cancel_credit} back as credit</span>` : ""} · <button type="button" class="link-btn" data-id="${b.id}" data-status="booked">Restore</button> · ${del}</div>`
+        + (!b.cancel_credit && back > 0 ? `<div class="paybtns"><button type="button" class="mini" data-credit-back="${b.id}">Give $${back} back as credit</button></div>` : "")
+      : `<div class="acts"><a class="btn btn-outline" href="tel:+1${b.phone}"><svg aria-hidden="true"><use href="#phone"></use></svg>Call</a><a class="btn btn-outline" href="sms:+1${b.phone}"><svg aria-hidden="true"><use href="#chat"></use></svg>Text</a><button type="button" class="btn btn-navy" data-id="${b.id}" data-status="done"><svg aria-hidden="true"><use href="#check"></use></svg>Done</button><button type="button" class="link-btn danger" data-id="${b.id}" data-status="canceled">Cancel</button>${del}</div>`;
     return `<li class="stop is-${b.status}">
       <span class="num">${i + 1}</span>
       <div class="main">
         <div class="row"><b>${esc(b.name)}</b><span class="price">$${b.price}</span></div>
         <a class="addr" href="${maps}" target="_blank" rel="noopener">${esc(addr)}</a>
         <div class="muted">${esc(fmtPhone(b.phone))}</div>
-        <div class="tags">${b.corner_lot ? `<span class="tag">Corner</span>` : `<span class="tag">Standard</span>`}${b.salt ? `<span class="tag salt">Salt: yes</span>` : `<span class="tag">No salt</span>`}${b.discount ? `<span class="tag off">Next-day −$${b.discount}</span>` : ""}${b.multiplier > 1 ? `<span class="tag late">After 6 PM ×${b.multiplier}</span>` : ""}${b.miles != null ? `<span class="tag">${b.miles} mi</span>` : ""}${b.area_status === "unverified" ? `<span class="tag warn">Check address</span>` : b.area_status === "approx" ? `<span class="tag warn">Distance approx.</span>` : ""}</div>
+        <div class="tags">${b.corner_lot ? `<span class="tag">Corner</span>` : `<span class="tag">Standard</span>`}${b.salt ? `<span class="tag salt">Salt: yes</span>` : `<span class="tag">No salt</span>`}${b.discount ? `<span class="tag off">Next-day −$${b.discount}</span>` : ""}${b.multiplier > 1 ? `<span class="tag late">After 6 PM ×${b.multiplier}</span>` : ""}${b.miles != null ? `<span class="tag">${b.miles} mi</span>` : ""}${b.area_status === "unverified" ? `<span class="tag warn">Check address</span>` : b.area_status === "approx" ? `<span class="tag warn">Distance approx.</span>` : ""}${b.credit_balance > 0 ? `<span class="tag credit">Credit $${b.credit_balance}</span>` : ""}</div>
         ${b.notes ? `<p class="notes">${esc(b.notes)}</p>` : ""}
         ${b.salt ? `<details><summary>Salt note accepted ${esc(timeOf(b.salt_ack_at))}</summary><p>${esc(b.salt_ack_text)}</p></details>` : ""}
         ${b.status === "canceled" && b.pay_status !== "paid" ? "" : payBlock(b)}
@@ -366,7 +392,7 @@ function render() {
     try {
       const r = await api("owner_mark_paid", { id: btn.dataset.paid || btn.dataset.unpay, method: btn.dataset.paid ? btn.dataset.method : null, date: day });
       data = Object.assign(data, r); render();
-    } catch (e) { btn.disabled = false; $("#dayErr").textContent = e.message; $("#dayErr").hidden = false; }
+    } catch (e) { btn.disabled = false; dayError(e); }
   }));
   for (const [id, v] of openRefunds) {
     const f = $(`#stops [data-refund-form="${id}"]`);
@@ -392,13 +418,38 @@ function render() {
       const r = await api("owner_mark_refund", { id, method: f ? btn.dataset.method : null, amount, date: day });
       openRefunds.delete(id);
       data = Object.assign(data, r); render();
-    } catch (e) { btn.disabled = false; $("#dayErr").textContent = e.message; $("#dayErr").hidden = false; }
+    } catch (e) { btn.disabled = false; dayError(e); }
   }));
   $$("#stops [data-status]").forEach((btn) => btn.addEventListener("click", async () => {
     if (btn.dataset.status === "canceled" && !confirmInline(btn)) return;
     btn.disabled = true;
     try { const r = await api("owner_status", { id: btn.dataset.id, status: btn.dataset.status, date: day }); data = Object.assign(data, r); render(); refreshStrip(); }
-    catch (e) { btn.disabled = false; $("#dayErr").textContent = e.message; $("#dayErr").hidden = false; }
+    catch (e) { btn.disabled = false; dayError(e); }
+  }));
+  $$("#stops [data-credit-back]").forEach((btn) => btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    try { const r = await capi("owner_credit_back", { id: btn.dataset.creditBack, date: day }); data = Object.assign(data, r); render(); }
+    catch (e) { btn.disabled = false; dayError(e); }
+  }));
+  $$("#stops [data-del]").forEach((btn) => btn.addEventListener("click", async () => {
+    const b = data.bookings.find((x) => x.id === btn.dataset.del);
+    if (!btn.dataset.sure) {
+      btn.dataset.sure = "1"; btn.textContent = "Tap again to delete for good";
+      const note = document.createElement("span");
+      note.className = "del-note";
+      const money = b ? paidMoney(b) - (b.refund_amount || 0) : 0, parts = [];
+      if (b && b.status === "booked" && b.credit_used > 0) parts.push(`Their $${b.credit_used} credit goes back to them.`);
+      if (b && b.status !== "done" && money > 0 && !b.cancel_credit) {
+        parts.push(`The $${money} they paid isn't given back. ${b.status === "booked" ? "To give it back as credit, cancel first." : "Give it back as credit first if they should keep it."}`);
+      }
+      note.textContent = parts.join(" ") || "This can't be undone.";
+      btn.after(note);
+      setTimeout(() => { if (btn.isConnected) { delete btn.dataset.sure; btn.textContent = "Delete"; note.remove(); } }, 5000);
+      return;
+    }
+    btn.disabled = true;
+    try { const r = await capi("owner_delete_booking", { id: btn.dataset.del, date: day }); data = Object.assign(data, r); render(); refreshStrip(); }
+    catch (e) { btn.disabled = false; dayError(e); }
   }));
   $("#updated").textContent = "Updated " + new Date().toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
 }
@@ -406,19 +457,31 @@ const PAID = { card: "Card", cashapp: "Cash App", cash: "Cash", tap: "Tap to pay
 const PLAN = { cash: "cash", tap: "tap to pay", cashapp: "Cash App", online: "online" };
 const REFUNDED = { cash: "Cash", cashapp: "Cash App", card: "Card", other: "Other" };
 const openRefunds = new Map();
+// Money actually paid for a visit (not counting credit).
+const paidMoney = (b) => b.pay_status !== "paid" ? 0 : b.paid_amount != null ? b.paid_amount : b.price - (b.credit_used || 0);
+// What canceling gives back as credit: credit used plus money paid, less refunds.
+const backOf = (b) => Math.max((b.credit_used || 0) + (b.pay_status === "paid" ? paidMoney(b) - (b.refund_amount || 0) : 0), 0);
+function dayError(e) {
+  const msg = e.code === "credit_spent" ? "They already used the credit from this cancellation, so it can't be restored. Ask them to book again."
+    : e.code === "already_credited" ? "That payment already went back to them as credit." : e.message;
+  $("#dayErr").textContent = msg; $("#dayErr").hidden = false;
+}
 function payBlock(b) {
+  const cu = b.credit_used || 0;
+  if (b.pay_status === "paid" && cu >= b.price) return `<div class="pay paid"><b>Paid with credit · $${cu}</b></div>`;
   if (b.pay_status === "paid") {
-    const amt = b.paid_amount || b.price;
-    const head = `<b>Paid${amt !== b.price ? " $" + amt : ""} · ${esc(PAID[b.paid_method] || "")}${b.paid_online ? " (online)" : ""}</b>`;
+    const amt = paidMoney(b);
+    const head = `<b>Paid${amt !== b.price ? " $" + amt : ""} · ${esc(PAID[b.paid_method] || "")}${b.paid_online ? " (online)" : ""}${cu ? ` + $${cu} credit` : ""}</b>`;
     if (b.refund_method) {
       return `<div class="pay paid"><div class="pay-row">${head}</div><div class="refund-line"><span>Refunded $${b.refund_amount} · ${esc(REFUNDED[b.refund_method] || "")}</span><button type="button" class="link-btn" data-unrefund="${b.id}">Undo</button></div></div>`;
     }
+    if (b.cancel_credit > 0 || amt <= 0) return `<div class="pay paid"><div class="pay-row">${head}</div></div>`;
     return `<div class="pay paid"><div class="pay-row">${head}<span class="pay-links">${b.paid_online ? "" : `<button type="button" class="link-btn" data-unpay="${b.id}">Undo</button>`}<button type="button" class="link-btn" data-refund-open="${b.id}">Refund</button></span></div>`
       + `<div class="refund-form" data-refund-form="${b.id}" hidden><label>Refund $<input type="number" inputmode="numeric" min="1" max="${amt}" step="1" value="${amt}" aria-label="Refund amount in dollars"></label>`
       + `<div class="paybtns"><span>Refunded by:</span>${["cash", "cashapp", "card", "other"].map((m) => `<button type="button" class="mini" data-refund="${b.id}" data-method="${m}">${REFUNDED[m]}</button>`).join("")}</div><p class="err" hidden></p></div></div>`;
   }
-  const why = b.pay_choice === "now" ? "Needs payment · online checkout not finished" : `Needs payment · plans to pay ${PLAN[b.pay_plan] || "after the job"}`;
-  return `<div class="pay due"><b>${esc(why)}</b><div class="paybtns"><span>Mark paid:</span>${["cash", "tap", "cashapp", "card"].map((m) => `<button type="button" class="mini" data-paid="${b.id}" data-method="${m}">${PAID[m]}</button>`).join("")}</div></div>`;
+  const why = `Needs ${cu ? `$${b.price - cu} more` : "payment"} · ${b.pay_choice === "now" ? "online checkout not finished" : `plans to pay ${PLAN[b.pay_plan] || "after the job"}`}`;
+  return `<div class="pay due"><b>${esc(why)}</b>${cu ? `<span class="sub">$${cu} of their credit already taken off</span>` : ""}<div class="paybtns"><span>Mark paid:</span>${["cash", "tap", "cashapp", "card"].map((m) => `<button type="button" class="mini" data-paid="${b.id}" data-method="${m}">${PAID[m]}</button>`).join("")}</div></div>`;
 }
 function confirmInline(btn) {
   if (btn.dataset.sure) return true;
@@ -439,37 +502,87 @@ $("#lkGo").addEventListener("click", async () => {
   err.hidden = true;
   if (ph.length !== 10) { err.textContent = "Enter a 10-digit phone number."; err.hidden = false; return; }
   box.hidden = false; box.innerHTML = `<div class="spin">Looking…</div>`;
-  try {
-    const r = await api("owner_customer", { phone: ph }), c = r.customer;
-    box.innerHTML = `
-      <b style="font-size:18px">${esc(c.name)}</b>
-      <div>${esc([c.street, [c.city, c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "))}</div>
-      <div class="muted">${esc(fmtPhone(c.phone))} · customer since ${esc(timeOf(c.created_at).split(",")[0])}</div>
-      <div class="tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="tag">${c.corner_lot ? "Corner" : "Standard"}</span>${c.miles != null ? `<span class="tag">${c.miles} mi away</span>` : ""}${c.area_status === "unverified" ? `<span class="tag warn">Address not checked</span>` : ""}${c.locked ? `<span class="tag salt">Locked: too many PIN tries</span>` : ""}</div>
-      ${r.bookings.length ? `<ul>${r.bookings.map((b) => `<li><span>${esc(fmt(b.date, { weekday: "short", month: "short", day: "numeric" }))}${b.salt ? " · salt" : ""}</span><span>$${b.price} · ${b.status}${b.pay_status === "paid" ? ` · paid ${PAID[b.paid_method] || ""}` : ""}${b.refund_method ? ` · refunded $${b.refund_amount}` : ""}</span></li>`).join("")}</ul>` : `<p class="muted">No bookings yet.</p>`}
-      <div class="pinrow"><div><label for="newPin">New PIN for them</label><input id="newPin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off"></div><button class="btn btn-outline" type="button" id="pinGo">Reset PIN</button></div>
-      <p class="err" id="pinErr" hidden></p><p class="ok-msg" id="pinOk" hidden></p>
-      <div style="margin-top:14px"><button type="button" class="link-btn danger" id="delCust">Delete this customer</button></div>`;
-    $("#delCust").addEventListener("click", async (ev) => {
-      const btn = ev.currentTarget;
-      if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "Tap again to delete them and their bookings"; return; }
-      btn.disabled = true;
-      try { await api("owner_delete_customer", { phone: ph }); box.innerHTML = `<p class="ok-msg">Customer deleted.</p>`; loadDay(true); }
-      catch (e) { btn.disabled = false; $("#pinErr").textContent = e.message; $("#pinErr").hidden = false; }
-    });
-    $("#newPin").addEventListener("input", (e) => { e.target.value = digits(e.target.value).slice(0, 4); });
-    $("#pinGo").addEventListener("click", async () => {
-      const pin = $("#newPin").value, pe = $("#pinErr"), po = $("#pinOk");
-      pe.hidden = po.hidden = true;
-      if (!/^\d{4}$/.test(pin)) { pe.textContent = "Use 4 numbers."; pe.hidden = false; return; }
-      try { await api("owner_reset_pin", { phone: ph, pin }); po.textContent = `Done. Text ${c.name.split(" ")[0]} their new PIN: ${pin}`; po.hidden = false; $("#newPin").value = ""; }
-      catch (e) { pe.textContent = e.message; pe.hidden = false; }
-    });
-  } catch (e) {
+  try { renderCust(await api("owner_customer", { phone: ph }), ph); }
+  catch (e) {
     box.hidden = true;
     err.textContent = e.code === "not_found" ? "No SnowHop account with that number." : e.message; err.hidden = false;
   }
 });
+const LOG_NOTES = { "Given back by Ethan": "You gave it back", "Paid after the visit was canceled": "Paid after canceling", "Visit restored": "Visit restored" };
+function logWhat(e) {
+  const day = e.date ? fmt(e.date, { weekday: "short", month: "short", day: "numeric" }) : "";
+  if (e.kind === "purchase") return `Bought credit${e.paid ? ` · paid $${e.paid}` : ""}`;
+  if (e.kind === "owner") return `${e.amount > 0 ? "Added by you" : "Taken off by you"}${e.note ? ` · ${e.note}` : ""}`;
+  if (e.kind === "returned") return e.note || "Credit returned";
+  const label = LOG_NOTES[e.note] || (e.kind === "cancel" ? "Canceled" : "Used on");
+  return day ? (label === "Used on" ? `Used on ${day}` : `${label} · ${day}`) : label === "Used on" ? "Used on a deleted order" : label;
+}
+function renderCust(r, ph) {
+  const box = $("#cust"), c = r.customer, log = r.credit_log || [];
+  const line = (b) => {
+    const bits = [`$${b.price}`, b.status];
+    if (b.pay_status === "paid") bits.push((b.credit_used || 0) >= b.price ? "paid with credit" : `paid ${PAID[b.paid_method] || ""}${b.credit_used ? ` + $${b.credit_used} credit` : ""}`);
+    else if (b.credit_used) bits.push(`$${b.credit_used} credit used`);
+    if (b.refund_method) bits.push(`refunded $${b.refund_amount}`);
+    if (b.cancel_credit) bits.push(`$${b.cancel_credit} back as credit`);
+    return bits.join(" · ");
+  };
+  box.innerHTML = `
+      <b style="font-size:18px">${esc(c.name)}</b>
+      <div>${esc([c.street, [c.city, c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", "))}</div>
+      <div class="muted">${esc(fmtPhone(c.phone))} · customer since ${esc(timeOf(c.created_at).split(",")[0])}</div>
+      <div class="tags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"><span class="tag">${c.corner_lot ? "Corner" : "Standard"}</span>${c.miles != null ? `<span class="tag">${c.miles} mi away</span>` : ""}${c.area_status === "unverified" ? `<span class="tag warn">Address not checked</span>` : ""}${c.locked ? `<span class="tag salt">Locked: too many PIN tries</span>` : ""}</div>
+      ${r.bookings.length ? `<ul>${r.bookings.map((b) => `<li><span><button type="button" class="link-btn lk-day" data-goto="${b.date}">${esc(fmt(b.date, { weekday: "short", month: "short", day: "numeric" }))}</button>${b.salt ? " · salt" : ""}</span><span>${esc(line(b))}</span></li>`).join("")}</ul>` : `<p class="muted">No bookings yet.</p>`}
+      <div class="cr">
+        <div class="cr-top"><span>SnowHop credit</span><b>$${r.credit || 0}</b></div>
+        <div class="cr-form">
+          <div class="cr-amt"><label for="crAmt">Amount</label><input id="crAmt" type="tel" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="$"></div>
+          <div><label for="crNote">Note <span class="muted" style="font-weight:400">(optional)</span></label><input id="crNote" type="text" maxlength="200" autocomplete="off" placeholder="Cash pack, goodwill…"></div>
+        </div>
+        <div class="cr-btns"><button class="btn btn-outline" type="button" id="crAdd">Add credit</button><button class="btn btn-outline" type="button" id="crTake">Take off</button></div>
+        <p class="err" id="crErr" hidden></p><p class="ok-msg" id="crOk" hidden></p>
+        ${log.length ? `<details><summary>Credit history (${log.length}${log.length >= 20 ? "+" : ""})</summary><ul>${log.map((e) => `<li><span>${esc(logWhat(e))}<small>${esc(timeOf(e.at))}</small></span><b class="${e.amount > 0 ? "plus" : ""}">${e.amount > 0 ? "+" : "−"}$${Math.abs(e.amount)}</b></li>`).join("")}</ul></details>` : ""}
+      </div>
+      <div class="pinrow"><div><label for="newPin">New PIN for them</label><input id="newPin" type="tel" inputmode="numeric" maxlength="4" autocomplete="off"></div><button class="btn btn-outline" type="button" id="pinGo">Reset PIN</button></div>
+      <p class="err" id="pinErr" hidden></p><p class="ok-msg" id="pinOk" hidden></p>
+      <div style="margin-top:14px"><button type="button" class="link-btn danger" id="delCust">Delete this customer</button></div>`;
+  $("#delCust").addEventListener("click", async (ev) => {
+    const btn = ev.currentTarget;
+    if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "Tap again to delete them, their bookings and their credit"; return; }
+    btn.disabled = true;
+    try { await api("owner_delete_customer", { phone: ph }); box.innerHTML = `<p class="ok-msg">Customer deleted.</p>`; loadDay(true); }
+    catch (e) { btn.disabled = false; $("#pinErr").textContent = e.message; $("#pinErr").hidden = false; }
+  });
+  $("#newPin").addEventListener("input", (e) => { e.target.value = digits(e.target.value).slice(0, 4); });
+  $("#pinGo").addEventListener("click", async () => {
+    const pin = $("#newPin").value, pe = $("#pinErr"), po = $("#pinOk");
+    pe.hidden = po.hidden = true;
+    if (!/^\d{4}$/.test(pin)) { pe.textContent = "Use 4 numbers."; pe.hidden = false; return; }
+    try { await api("owner_reset_pin", { phone: ph, pin }); po.textContent = `Done. Text ${c.name.split(" ")[0]} their new PIN: ${pin}`; po.hidden = false; $("#newPin").value = ""; }
+    catch (e) { pe.textContent = e.message; pe.hidden = false; }
+  });
+  $$("[data-goto]", box).forEach((b) => b.addEventListener("click", () => {
+    day = b.dataset.goto; loadDay();
+    $("#dayTitle").scrollIntoView({ block: "start", behavior: "smooth" });
+  }));
+  $("#crAmt").addEventListener("input", (e) => { e.target.value = digits(e.target.value).slice(0, 5); });
+  const adjust = async (sign, btn) => {
+    const ce = $("#crErr"), co = $("#crOk"), amt = Number($("#crAmt").value);
+    ce.hidden = co.hidden = true;
+    if (!Number.isInteger(amt) || amt < 1 || amt > 10000) { ce.textContent = "Enter a whole-dollar amount from $1 to $10,000."; ce.hidden = false; $("#crAmt").focus(); return; }
+    btn.disabled = true;
+    try {
+      const before = r.credit || 0, nr = await capi("owner_credit_adjust", { phone: ph, amount: sign * amt, note: $("#crNote").value });
+      renderCust(nr, ph);
+      const used = sign > 0 ? before + amt - (nr.credit || 0) : 0;
+      $("#crOk").textContent = sign > 0 ? `Added $${amt}.${used > 0 ? ` $${used} of it paid for their upcoming visits.` : ""}` : `Took off $${amt}.`;
+      $("#crOk").hidden = false;
+      if (used > 0) loadDay(true);
+    } catch (e) { btn.disabled = false; ce.textContent = e.message; ce.hidden = false; }
+  };
+  $("#crAdd").addEventListener("click", (e) => adjust(1, e.currentTarget));
+  $("#crTake").addEventListener("click", (e) => adjust(-1, e.currentTarget));
+}
 
 // ---- reviews ----
 async function loadReviews() {

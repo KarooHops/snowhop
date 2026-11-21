@@ -96,6 +96,20 @@ h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.15;le
 .note a{white-space:nowrap}
 .note svg{width:22px;height:22px;flex:none;margin-top:1px;color:var(--blue)}
 .note.salt{background:var(--tint);border-color:transparent}
+.packs-wrap{margin:16px 0 0;background:var(--navy);color:#fff;border-radius:20px;padding:22px 20px 20px}
+.packs-wrap h3{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.2;margin:0 0 4px}
+.packs-wrap > p{margin:0;color:#CFE2F5}
+.packs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 0}
+@media (min-width:760px){.packs{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pack{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:15px 14px 14px;border:0;border-radius:16px;background:#fff;color:var(--navy);text-align:left;cursor:pointer}
+.pack:hover{box-shadow:0 0 0 3px var(--ice)}
+.pk-get{font-family:var(--display);font-weight:800;font-size:32px;line-height:1}
+.pk-l{font-size:14px;font-weight:600;color:var(--slate)}
+.pk-pay{margin-top:8px;font-weight:700}
+.pk-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.pk-tag{font-size:11.5px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;line-height:1.4;border-radius:999px;padding:2px 8px;background:#ECFDF3;color:var(--ok);white-space:nowrap}
+.pk-tag.best{background:#FFF3D1;color:#7A4D00}
+.packs-fine{margin:12px 0 0;font-size:14px;color:#9FB8D1}
 
 /* snow watch */
 .wx-alerts{display:grid;gap:10px;margin:0 0 16px}
@@ -310,7 +324,8 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
 .acct .tag{margin-top:8px}
 .list-h{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--slate);margin:20px 0 10px}
 .visits{list-style:none;margin:0;padding:0;display:grid;gap:10px}
-.visit{border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;justify-content:space-between;gap:12px;align-items:center}
+.visit{border:1px solid var(--line);border-radius:14px;padding:13px 15px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:center}
+.visit > div:first-child{flex:1 1 0;min-width:0}
 .visit b{display:block}
 .visit span{color:var(--slate);font-size:14px}
 .visit .vn{display:block;color:var(--slate);font-size:14px;margin-top:2px;white-space:pre-line}
@@ -321,14 +336,39 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
 .visit.past{background:var(--bg);border-color:transparent}
 .visit .st{font-size:13px;font-weight:700;color:var(--slate);white-space:nowrap}
 .visit .st.done{color:var(--ok)}
+.visit .vp.cr{color:var(--ok);font-weight:600}
+.visit .vc{display:block;font-size:13px;color:var(--slate);margin-top:2px}
 .cancel-btn{border:1.5px solid #F4B4AE;color:var(--err);background:#fff;border-radius:999px;min-height:40px;padding:0 14px;font-weight:700;font-size:14px;cursor:pointer;flex:none}
-.confirm{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:none}
-.confirm span{font-size:13px;color:var(--err);font-weight:600}
-.confirm div{display:flex;gap:6px}
+.confirm{flex:1 1 100%;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 12px;padding-top:10px;border-top:1px solid var(--line)}
+.confirm span{font-size:14px;color:var(--err);font-weight:600;flex:1 1 180px}
+.confirm div{display:flex;gap:6px;margin-left:auto}
 .confirm button{min-height:38px;padding:0 12px;border-radius:999px;font-weight:700;font-size:14px;cursor:pointer;border:1.5px solid var(--field);background:#fff}
 .confirm .yes{background:var(--err);border-color:var(--err);color:#fff}
 .empty{color:var(--slate);margin:0;padding:14px;border:1px dashed var(--field);border-radius:14px}
 .acct-links{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-top:22px}
+
+/* credit */
+.credit-box{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid #ABEFC6;background:#F3FBF6;border-radius:16px;padding:14px 16px;margin:0 0 12px}
+.credit-box .cb-l{display:block;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ok)}
+.credit-box b{display:block;font-family:var(--display);font-weight:800;font-size:30px;line-height:1.1}
+.credit-box small{display:block;color:var(--slate);font-size:14px}
+.cl{margin:0 0 20px}
+.cl summary{cursor:pointer;font-weight:600;color:var(--blue);font-size:15px;padding:4px 0;width:max-content;max-width:100%}
+.credit-log{list-style:none;margin:8px 0 0;padding:0;border:1px solid var(--line);border-radius:14px}
+.credit-log li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--line);font-size:15px}
+.credit-log li:first-child{border-top:0}
+.credit-log small{display:block;color:var(--slate);font-size:13px}
+.credit-log b{white-space:nowrap}
+.credit-log b.plus{color:var(--ok)}
+.pack-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:8px 0 0}
+.pack-opt{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0;padding:14px;border:1.5px solid var(--field);border-radius:14px;background:#fff;cursor:pointer;text-align:left}
+.pack-opt b{font-family:var(--display);font-weight:800;font-size:28px;line-height:1}
+.pack-opt > span{font-size:14px;color:var(--slate)}
+.pack-opt .pk-tags{margin-top:6px}
+.pack-opt[aria-checked=true]{border-color:var(--blue);background:var(--tint);box-shadow:0 0 0 1px var(--blue)}
+.covered{display:flex;gap:10px;align-items:flex-start;background:#ECFDF3;border:1px solid #ABEFC6;border-radius:14px;padding:12px 14px;margin:0;color:#05603A;font-weight:600}
+.covered svg{width:20px;height:20px;flex:none;margin-top:2px;color:var(--ok)}
+.summary .cr dd{color:var(--ok)}
 .star-pick{display:flex;gap:6px;margin:6px 0 18px}
 .star-pick button{width:52px;height:52px;border:1.5px solid var(--field);border-radius:14px;background:#fff;font-size:28px;line-height:1;color:#C9D4DF;cursor:pointer}
 .star-pick button.on{color:var(--gold);border-color:var(--gold);background:#FFF9EA}
@@ -461,11 +501,22 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
         <div class="price"><span class="amt">$40</span><h3>Corner house or heavy snow</h3><p>Sidewalk on two sides, or a really deep snowfall.</p></div>
         <div class="price"><span class="amt">$10 off</span><h3>Next-day clean-up</h3><p>Booked the day after a visit? That visit is $10 off.</p></div>
       </div>
+      <div class="packs-wrap" id="packsWrap">
+        <h3>Save with SnowHop credit</h3>
+        <p>Buy credit ahead and get extra. It comes off your visits automatically and never expires.</p>
+        <div class="packs" id="packs">
+          <button type="button" class="pack" data-pack="50"><span class="pk-get">$60</span><span class="pk-l">credit</span><span class="pk-pay">Buy for $50</span><span class="pk-tags"><span class="pk-tag">+$10 free</span></span></button>
+          <button type="button" class="pack" data-pack="75"><span class="pk-get">$90</span><span class="pk-l">credit</span><span class="pk-pay">Buy for $75</span><span class="pk-tags"><span class="pk-tag">+$15 free</span></span></button>
+          <button type="button" class="pack" data-pack="100"><span class="pk-get">$120</span><span class="pk-l">credit</span><span class="pk-pay">Buy for $100</span><span class="pk-tags"><span class="pk-tag">+$20 free</span></span></button>
+          <button type="button" class="pack" data-pack="200"><span class="pk-get">$250</span><span class="pk-l">credit</span><span class="pk-pay">Buy for $200</span><span class="pk-tags"><span class="pk-tag">+$50 free</span><span class="pk-tag best">Best value</span></span></button>
+        </div>
+        <p class="packs-fine" id="packsFine">Pay online with card, Apple Pay or Cash App. Credit can't be cashed out.</p>
+      </div>
       <div class="notes">
         <p class="note"><svg aria-hidden="true"><use href="#clock"></use></svg><span><b>Any time on the day you book</b>, 12 AM to 11:59 PM. Each visit takes 15 minutes to an hour, depending on how deep the snow is and the size of your lot.</span></p>
         <p class="note"><svg aria-hidden="true"><use href="#pin"></use></svg><span>Serving homes within <b>10 miles of Highlands Ranch</b>.</span></p>
         <p class="note" id="payNote"><svg aria-hidden="true"><use href="#card"></use></svg><span>Pay after the job with cash, tap to pay or Cash App.</span></p>
-        <p class="note" id="refundNote"><svg aria-hidden="true"><use href="#chat"></use></svg><span><b>All payments are final, with no refunds.</b> Have a concern about a visit? Call or text Ethan at <a class="js-tel" href="tel:+13039939110">(303) 993-9110</a> and he'll look into it.</span></p>
+        <p class="note" id="refundNote"><svg aria-hidden="true"><use href="#chat"></use></svg><span><b>Free to cancel until <span id="cancelRule">12 PM the day before</span>.</b> Already paid? It goes to your SnowHop credit for your next visit. There are no cash refunds. Have a concern about a visit? Call or text Ethan at <a class="js-tel" href="tel:+13039939110">(303) 993-9110</a>.</span></p>
         <p class="note"><svg aria-hidden="true"><use href="#i-moon"></use></svg><span><b>Booking for tonight?</b> Same-day visits booked between 6 PM and midnight are double the price.</span></p>
         <p class="note salt"><svg aria-hidden="true"><use href="#flake"></use></svg><span><b>Salting is optional and free.</b> Ethan only salts if you ask for it when you book. Salt can harm grass and plants, so he keeps it off lawn edges.</span></p>
       </div>
@@ -631,6 +682,7 @@ const S = {
   draft: freshDraft(),
   notice: "",
   afterSignIn: null,
+  pack: null,        // credit pack picked, by what it costs
 };
 function freshDraft(prev) {
   const saved = (() => { try { return JSON.parse(store.get("snowhop:details") || "{}"); } catch (e) { return {}; } })();
@@ -645,7 +697,8 @@ function setSession(r) {
   setMe(r);
 }
 function setMe(r) {
-  S.me = { customer: r.customer, bookings: r.bookings || [], review: r.review || null, can_review: !!r.can_review, today: r.today };
+  S.me = { customer: r.customer, bookings: r.bookings || [], review: r.review || null, can_review: !!r.can_review, today: r.today,
+    credit: Math.max(0, Number(r.credit) || 0), credit_log: r.credit_log || [] };
   $("#acctLabel").textContent = "My visits";
   updateReviewCta();
   chatOnAccount();
@@ -677,6 +730,43 @@ const PLAN_LABEL = Object.fromEntries(PLANS);
 const PAID_LABEL = { card: "Card", cashapp: "Cash App", cash: "Cash", tap: "Tap to pay", other: "Other" };
 const outOfArea = (miles) => `Sorry, SnowHop only serves homes within ${radius()} miles of Highlands Ranch${miles ? `, and that address is about ${Math.round(miles)} miles away` : ""}.`;
 
+// ---- credit ----
+const CREDIT_API = cfg.creditUrl || String(API).replace(/snow-book\/?$/, "snow-credit");
+const capi = (action, data) => api(action, data, CREDIT_API);
+const money = (n) => "$" + (Number(n) || 0);
+const myCredit = () => (S.me ? S.me.credit : 0);
+const DEFAULT_PACKS = [{ pay: 50, credit: 60 }, { pay: 75, credit: 90 }, { pay: 100, credit: 120 }, { pay: 200, credit: 250 }];
+const packs = () => (S.avail && Array.isArray(S.avail.credit_packs) ? S.avail.credit_packs : DEFAULT_PACKS)
+  .filter((p) => p && Number.isInteger(p.pay) && Number.isInteger(p.credit) && p.credit > p.pay);
+// The pack with the biggest bonus, if one stands out.
+function bestPack(list) {
+  const share = (p) => (p.credit - p.pay) / p.pay, top = Math.max(...list.map(share));
+  const tops = list.filter((p) => share(p) === top);
+  return list.length > 1 && tops.length === 1 ? tops[0] : null;
+}
+const packTags = (p, best) => `<span class="pk-tags"><span class="pk-tag">+${money(p.credit - p.pay)} free</span>${p === best ? `<span class="pk-tag best">Best value</span>` : ""}</span>`;
+// Canceling online closes this long before the visit day starts: 12 hours is "12 PM the day before".
+function cancelRule() {
+  const h = Math.max(0, Math.round(Number(S.avail && S.avail.cancel_hours_before != null ? S.avail.cancel_hours_before : 12)));
+  const days = Math.max(1, Math.ceil(h / 24)), hour = (days * 24 - h) % 24;
+  return `${hour === 0 ? "midnight" : hourLabel(hour)} ${days === 1 ? "the day" : `${days} days`} before`;
+}
+// "Fri, Nov 20, 12 PM" in Ethan's time zone
+function fmtWhen(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  const p = {};
+  for (const x of new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(d)) p[x.type] = x.value;
+  return `${p.weekday}, ${p.month} ${p.day}, ${p.hour}${p.minute === "00" ? "" : ":" + p.minute} ${String(p.dayPeriod || "").toUpperCase()}`;
+}
+const canCancel = (b) => !!b && b.status === "booked" && !!b.cancel_until && Date.now() < Date.parse(b.cancel_until);
+function renderPacks() {
+  const list = packs(), best = bestPack(list);
+  $("#packsWrap").hidden = !list.length;
+  $("#packs").innerHTML = list.map((p) => `<button type="button" class="pack" data-pack="${p.pay}"><span class="pk-get">${money(p.credit)}</span><span class="pk-l">credit</span><span class="pk-pay">Buy for ${money(p.pay)}</span>${packTags(p, best)}</button>`).join("");
+  $("#packsFine").textContent = payOn() ? "Pay online with card, Apple Pay or Cash App. Credit can't be cashed out." : `Online payments are off right now. Text ${OWNER} to buy credit.`;
+}
+
 // ---- spots left today ----
 async function loadAvailability() {
   try {
@@ -693,6 +783,8 @@ function renderSpots() {
   $("#payNote span").textContent = payOn()
     ? "Pay online when you book (card, Apple Pay or Cash App), or after the job with cash, tap to pay or Cash App."
     : "Pay after the job with cash, tap to pay or Cash App.";
+  $("#cancelRule").textContent = cancelRule();
+  renderPacks();
   const a = S.avail, el = $("#spots");
   if (!a || !a.days || !a.days.length) { el.hidden = true; return; }
   const t = a.days[0], tm = a.days[1];
@@ -731,13 +823,13 @@ $("#sheetBack").addEventListener("click", () => {
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !sheet.hidden) closeSheet(); });
 
-const TITLES = { info: "Your info", corner: "Corner house?", day: "Pick a day", finish: "Finish up", done: "Booked", signin: "Sign in", account: "My visits", edit: "Edit details", review: "Write a review" };
+const TITLES = { info: "Your info", corner: "Corner house?", day: "Pick a day", finish: "Finish up", done: "Booked", signin: "Sign in", account: "My visits", edit: "Edit details", review: "Write a review", credit: "SnowHop credit" };
 
 function show(view) {
   openSheet();
   S.view = view;
   const inFlow = S.flow && S.flow.steps.includes(view);
-  S.back = { edit: "account", review: S.me ? "account" : null }[view] || null;
+  S.back = { edit: "account", review: S.me ? "account" : null, credit: S.me ? "account" : null }[view] || null;
   if (view === "signin" && S.flow) S.back = S.flow.steps[S.flow.i];
   $("#sheetTitle").textContent = TITLES[view];
   $("#sheetStep").textContent = inFlow ? `Step ${S.flow.i + 1} of ${S.flow.steps.length}` : "";
@@ -824,7 +916,7 @@ const VIEWS = {
       </div>
       <p class="switch-to">Booked with SnowHop before? <button type="button" class="link-btn" id="toSignin">Sign in</button></p>`;
     bindFields();
-    $("#toSignin").addEventListener("click", () => { S.afterSignIn = "book"; show("signin"); });
+    $("#toSignin").addEventListener("click", () => { S.afterSignIn = S.flow && S.flow.kind === "credit" ? "credit" : "book"; show("signin"); });
     foot(`<button class="btn btn-navy btn-block" type="button" id="go">Next</button>`);
     $("#go").addEventListener("click", async () => {
       if (!checkProfile()) return;
@@ -918,6 +1010,12 @@ const VIEWS = {
     const isNew = !S.token;
     if (!payOn() && S.draft.payChoice !== "later") { S.draft.payChoice = "later"; if (S.draft.payPlan === "online") S.draft.payPlan = null; }
     const d = S.draft, notice = (S.avail && S.avail.salt_notice) || "Salt can harm grass, plants and concrete less than a year old.";
+    // Credit comes off first. If it covers the whole visit, there's nothing to pay.
+    const q0 = quote(d.date), use = Math.min(myCredit(), q0.price), due = q0.price - use, covered = use > 0 && due === 0;
+    const slot = S.avail && S.avail.days.find((x) => x.date === d.date), until = slot && slot.cancel_until;
+    const cancelText = until && Date.now() >= Date.parse(until)
+      ? `It's past the cancel deadline for this day (${cancelRule()}), so once it's booked it can't be canceled online. No cash refunds.`
+      : `Free to cancel until ${until ? fmtWhen(until) : `${cancelRule()} your visit`}. If you've paid, canceling puts it on your SnowHop credit. No cash refunds.`;
     sBody.innerHTML = `
       <div class="opt${d.salt ? " on" : ""}" id="saltBox">
         <label class="toggle-row" for="f-salt">
@@ -935,7 +1033,8 @@ const VIEWS = {
         ${isNew ? field("pin", "Create a 4-digit PIN", "password", { inputmode: "numeric", pattern: "[0-9]*", maxlength: 4, autocomplete: "new-password", class: "pin" }, "", `You'll use your phone number and this PIN to see or change your bookings. Forgot it? Text ${esc(OWNER)}.`) : ""}
       </div>
       <div class="pay-box">
-        <span class="legend" id="payLbl">How do you want to pay?</span>
+        ${covered ? `<p class="covered" id="covered"><svg aria-hidden="true"><use href="#check"></use></svg><span>Your SnowHop credit covers this visit${myCredit() > use ? `, and you'll still have ${money(myCredit() - use)} left` : ""}. Nothing to pay.</span></p>` : `
+        <span class="legend" id="payLbl">${use ? `How do you want to pay the other ${money(due)}?` : "How do you want to pay?"}</span>
         <div class="pay-opts" role="radiogroup" aria-labelledby="payLbl">
           ${payOn() ? `<button type="button" role="radio" class="pay-opt" data-pay="now" aria-checked="${d.payChoice === "now"}"><b>Pay now</b><small>Card, Apple Pay or Cash App</small></button>` : ""}
           <button type="button" role="radio" class="pay-opt" data-pay="later" aria-checked="${d.payChoice === "later"}"><b>Pay after the job</b><small>Cash, tap to pay or Cash App</small></button>
@@ -944,8 +1043,8 @@ const VIEWS = {
           <span class="legend" id="planLbl">How will you pay?</span>
           <div class="chips" role="radiogroup" aria-labelledby="planLbl">${PLANS.filter(([k]) => payOn() || k !== "online").map(([k, l]) => `<button type="button" role="radio" class="chip" data-plan="${k}" aria-checked="${d.payPlan === k}">${l}</button>`).join("")}</div>
         </div>
-        <p class="err" id="e-pay" hidden></p>
-        <p class="fine" id="payFinal">All payments are final, with no refunds. Have a concern about a visit? Call or text ${esc(OWNER)}.</p>
+        <p class="err" id="e-pay" hidden></p>`}
+        <p class="fine" id="payFinal">${esc(cancelText)}</p>
       </div>
       <div class="summary" id="summary"></div>`;
     bindFields();
@@ -959,12 +1058,13 @@ const VIEWS = {
         <div><dt>Address</dt><dd>${esc(addr)}</dd></div>
         <div><dt>Lot</dt><dd>${q.corner ? "Corner house" : "Standard"}</dd></div>
         <div><dt>Salting</dt><dd>${d.salt ? "Yes, free" : "No"}</dd></div>
-        <div><dt>Payment</dt><dd>${d.payChoice === "now" ? "Pay now online" : d.payChoice === "later" ? (d.payPlan ? `After the job · ${PLAN_LABEL[d.payPlan]}` : "After the job") : "Choose above"}</dd></div>
+        <div><dt>Payment</dt><dd>${covered ? "SnowHop credit" : d.payChoice === "now" ? "Pay now online" : d.payChoice === "later" ? (d.payPlan ? `After the job · ${PLAN_LABEL[d.payPlan]}` : "After the job") : "Choose above"}</dd></div>
         ${q.off ? `<div><dt>Next-day clean-up</dt><dd>−$${q.off}</dd></div>` : ""}
         ${q.mult > 1 ? `<div><dt>Same-day after ${lateTime()}</dt><dd>×${q.mult}</dd></div>` : ""}
-        <div class="total"><dt>Price</dt><dd>${q.off && q.mult === 1 ? `<s>$${q.base}</s>` : ""}$${q.price}</dd></div></dl>
+        ${use ? `<div><dt>Price</dt><dd>${money(q.price)}</dd></div><div class="cr"><dt>SnowHop credit</dt><dd>−${money(use)}</dd></div>` : ""}
+        <div class="total"><dt>${use ? "Left to pay" : "Price"}</dt><dd>${!use && q.off && q.mult === 1 ? `<s>$${q.base}</s>` : ""}${money(use ? due : q.price)}</dd></div></dl>
         <p class="fine">${esc(OWNER)} comes any time that day, 12 AM to 11:59 PM. Each visit takes 15 minutes to an hour, depending on the snow and your lot size.</p>`;
-      $("#go").textContent = `${d.payChoice === "now" ? "Book & pay" : "Book my visit"} · $${q.price}`;
+      $("#go").textContent = covered ? "Book with my credit" : `${d.payChoice === "now" ? "Book & pay" : "Book my visit"} · ${money(due)}`;
     };
     salt.addEventListener("change", () => {
       d.salt = salt.checked; if (!d.salt) { d.saltAck = false; ack.checked = false; }
@@ -985,18 +1085,20 @@ const VIEWS = {
   },
 
   done() {
-    const b = S.lastBooking || {};
+    const b = S.lastBooking || {}, cu = Number(b.credit_used) || 0, due = Number(b.due) || 0;
+    const payText = b.pay_status === "paid" && cu > 0 ? `Paid with ${money(cu)} of your SnowHop credit`
+      : (cu ? `${money(cu)} credit used · ` : "") + (b.pay_choice === "later" ? `Pay ${money(due)} after the job${b.pay_plan ? ` · ${PLAN_LABEL[b.pay_plan]}` : ""}` : `${money(due)} to pay online`);
     sBody.innerHTML = `
       <div class="done">
         <svg aria-hidden="true"><use href="#check"></use></svg>
         <h3>You're booked!</h3>
         <p class="big">${esc(longDay(b.date))}</p>
-        <p>${esc(b.street)} · $${b.price}${b.salt ? " · free salting" : ""}</p>
-        <p>${b.pay_choice === "later" ? `Pay after the job${b.pay_plan ? ` · ${esc(PLAN_LABEL[b.pay_plan])}` : ""}` : "Paying online"}</p>
+        <p>${esc(b.street)} · ${money(b.price)}${b.salt ? " · free salting" : ""}</p>
+        <p>${esc(payText)}</p>
       </div>
       ${S.payNote ? `<p class="form-error" style="margin:0 0 14px">${esc(S.payNote)}</p>` : ""}
       <p class="fine" style="text-align:center">${esc(OWNER)} will clear it any time that day, 12 AM to 11:59 PM.</p>
-      <p class="fine" style="text-align:center">Questions or changes? Call or text ${esc(OWNER)} at <a href="${telHref}">${esc(fmtPhone(cfg.phone))}</a>, or cancel from My visits.</p>`;
+      <p class="fine" style="text-align:center">Questions or changes? Call or text ${esc(OWNER)} at <a href="${telHref}">${esc(fmtPhone(cfg.phone))}</a>.${canCancel(b) ? ` You can cancel from My visits until ${esc(fmtWhen(b.cancel_until))}.` : ""}</p>`;
     foot(`<div class="foot-row"><button class="btn btn-outline btn-block" type="button" id="toAcct">My visits</button><button class="btn btn-navy btn-block" type="button" id="go">Done</button></div>`);
     $("#toAcct").addEventListener("click", () => { S.flow = null; show("account"); });
     $("#go").addEventListener("click", closeSheet);
@@ -1030,6 +1132,7 @@ const VIEWS = {
         if (then === "book") startBooking(S.draft.date);
         else if (then === "finish") { S.flow = { steps: ["day", "finish"], i: S.draft.date ? 1 : 0 }; show(S.draft.date ? "finish" : "day"); }
         else if (then === "review") show(S.me.can_review ? "review" : "account");
+        else if (then === "credit") { S.flow = null; show("credit"); }
         else show("account");
       } catch (e) { busy(go, false); showErr(e.message); }
     };
@@ -1043,16 +1146,34 @@ const VIEWS = {
       api("me", { token: S.token }).then((r) => { setMe(r); if (S.view === "account") VIEWS.account(); }).catch(() => { if (S.view === "account") show("signin"); });
       return;
     }
-    const c = S.me.customer, t = S.me.today || today(), p = pricing();
+    const c = S.me.customer, t = S.me.today || today(), p = pricing(), bal = myCredit(), log = S.me.credit_log || [];
     const upcoming = S.me.bookings.filter((b) => b.status === "booked" && b.date >= t).sort((x, y) => x.date.localeCompare(y.date));
     const past = S.me.bookings.filter((b) => !(b.status === "booked" && b.date >= t)).slice(0, 8);
-    const payLine = (b) => b.status === "canceled" ? ""
-      : b.pay_status === "paid" ? `<span class="vp ok">Paid${b.paid_method ? ` · ${PAID_LABEL[b.paid_method]}` : ""}</span>`
-      : `<span class="vp${b.pay_choice === "now" ? " due" : ""}">${b.pay_choice === "now" ? "Not paid yet" : `Pay after the job${b.pay_plan ? ` · ${PLAN_LABEL[b.pay_plan]}` : ""}`}${payOn() ? ` · <button type="button" class="link-btn" data-pay-id="${b.id}">Pay $${b.price} now</button>` : ""}</span>`;
-    const visit = (b, isPast) => `<li class="visit${isPast ? " past" : ""}" data-id="${b.id}">
-        <div><b>${esc(shortDay(b.date))}</b><span>$${b.price}${b.discount ? ` (next-day, $${b.discount} off)` : ""}${b.multiplier > 1 ? ` (after ${lateTime()}, ×${b.multiplier})` : ""} · ${b.salt ? "Free salting" : "No salt"}</span>${payLine(b)}${b.notes && !isPast ? `<span class="vn">${esc(b.notes)}</span>` : ""}</div>
-        ${isPast ? `<span class="st ${b.status}">${b.status === "done" ? "Done" : b.status === "canceled" ? "Canceled" : "Past"}</span>` : b.pay_status === "paid" ? "" : `<button type="button" class="cancel-btn" data-cancel="${b.id}">Cancel</button>`}
+    const payLine = (b) => {
+      const cu = Number(b.credit_used) || 0, used = cu ? `${money(cu)} credit used · ` : "";
+      if (b.status === "canceled") return b.cancel_credit > 0 ? `<span class="vp cr">${money(b.cancel_credit)} went to your credit</span>` : "";
+      if (b.pay_status === "paid") {
+        const how = cu >= b.price ? "Paid with credit" : `Paid${cu ? ` · ${money(cu)} credit + ${b.paid_method ? PAID_LABEL[b.paid_method] : "payment"}` : b.paid_method ? ` · ${PAID_LABEL[b.paid_method]}` : ""}`;
+        return `<span class="vp ok">${how}</span>`;
+      }
+      return `<span class="vp${b.pay_choice === "now" ? " due" : ""}">${used}${b.pay_choice === "now" ? "Not paid yet" : `Pay after the job${b.pay_plan ? ` · ${PLAN_LABEL[b.pay_plan]}` : ""}`}${payOn() ? ` · <button type="button" class="link-btn" data-pay-id="${b.id}">Pay ${money(b.due)} now</button>` : ""}</span>`;
+    };
+    const visit = (b, isPast) => {
+      const open = !isPast && canCancel(b);
+      return `<li class="visit${isPast ? " past" : ""}" data-id="${b.id}">
+        <div><b>${esc(shortDay(b.date))}</b><span>$${b.price}${b.discount ? ` (next-day, $${b.discount} off)` : ""}${b.multiplier > 1 ? ` (after ${lateTime()}, ×${b.multiplier})` : ""} · ${b.salt ? "Free salting" : "No salt"}</span>${payLine(b)}${isPast ? "" : `<span class="vc">${open ? `Free to cancel until ${esc(fmtWhen(b.cancel_until))}` : `Too late to cancel online. Call or text ${esc(OWNER)}.`}</span>`}${b.notes && !isPast ? `<span class="vn">${esc(b.notes)}</span>` : ""}</div>
+        ${isPast ? `<span class="st ${b.status}">${b.status === "done" ? "Done" : b.status === "canceled" ? "Canceled" : "Past"}</span>` : open ? `<button type="button" class="cancel-btn" data-cancel="${b.id}">Cancel</button>` : ""}
       </li>`;
+    };
+    const logWhat = (e) => {
+      const day = e.date ? shortDay(e.date) : "";
+      if (e.kind === "purchase") return "Bought credit";
+      if (e.kind === "cancel") return day ? `Canceled visit · ${day}` : "Canceled visit";
+      if (e.kind === "used") return day ? `Used on ${day}` : "Used on a visit";
+      if (e.kind === "returned") return day ? `Price went down · ${day}` : `Order removed by ${OWNER}`;
+      return e.amount > 0 ? `Added by ${OWNER}` : `Taken off by ${OWNER}`;
+    };
+    const logDay = (at) => new Date(at).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric" });
     sBody.innerHTML = `
       ${S.notice ? `<p class="form-ok">${esc(S.notice)}</p>` : ""}
       <div class="acct">
@@ -1060,6 +1181,11 @@ const VIEWS = {
         <span class="tag">${c.corner_lot ? `Corner house · $${p.corner}` : `Standard lot · $${p.base}`}</span></div>
         <button type="button" class="link-btn" id="toEdit">Edit</button>
       </div>
+      <div class="credit-box" id="creditBox">
+        <div><span class="cb-l">SnowHop credit</span><b>${money(bal)}</b><small>${bal ? "Comes off your next visits automatically." : "Buy credit ahead and get extra."}</small></div>
+        ${packs().length ? `<button type="button" class="btn btn-outline btn-small" id="toCredit">Buy credit</button>` : ""}
+      </div>
+      ${log.length ? `<details class="cl"><summary>Credit history</summary><ul class="credit-log">${log.map((e) => `<li><span>${esc(logWhat(e))}<small>${esc(logDay(e.at))}</small></span><b class="${e.amount > 0 ? "plus" : ""}">${e.amount > 0 ? "+" : "−"}${money(Math.abs(e.amount))}</b></li>`).join("")}</ul></details>` : ""}
       <h3 class="list-h">Upcoming</h3>
       ${upcoming.length ? `<ul class="visits">${upcoming.map((b) => visit(b, false)).join("")}</ul>` : `<p class="empty">No visits booked yet.</p>`}
       ${past.length ? `<h3 class="list-h">History</h3><ul class="visits">${past.map((b) => visit(b, true)).join("")}</ul>` : ""}
@@ -1073,26 +1199,93 @@ const VIEWS = {
       show("edit");
     });
     const rv = $("#toReview"); if (rv) rv.addEventListener("click", () => show("review"));
+    const tc = $("#toCredit"); if (tc) tc.addEventListener("click", () => show("credit"));
     $("#signOut").addEventListener("click", async () => { const tk = S.token; forgetSession(); closeSheet(); try { await api("logout", { token: tk }); } catch (e) { /* already gone */ } });
     $$("[data-pay-id]", sBody).forEach((btn) => btn.addEventListener("click", async () => {
       busy(btn, true, "Opening…");
-      try { location.href = (await api("pay", { token: S.token, id: btn.dataset.payId })).url; }
+      try { location.href = (await capi("pay", { token: S.token, id: btn.dataset.payId })).url; }
       catch (e) { busy(btn, false); showErr(e.message); }
     }));
     $$("[data-cancel]", sBody).forEach((btn) => btn.addEventListener("click", () => {
+      const bk = S.me.bookings.find((x) => x.id === btn.dataset.cancel) || {};
       const holder = document.createElement("div");
       holder.className = "confirm";
-      holder.innerHTML = `<span>Cancel this visit?</span><div><button type="button" class="no">Keep</button><button type="button" class="yes">Cancel it</button></div>`;
+      holder.innerHTML = `<span>${bk.back > 0 ? `Cancel this visit? The ${money(bk.back)} you paid goes to your SnowHop credit.` : "Cancel this visit?"}</span><div><button type="button" class="no">Keep</button><button type="button" class="yes">Cancel it</button></div>`;
       btn.replaceWith(holder);
       $(".no", holder).addEventListener("click", () => VIEWS.account());
       $(".yes", holder).addEventListener("click", async (ev) => {
         busy(ev.currentTarget, true, "…");
-        try { setMe(await api("cancel", { token: S.token, id: btn.dataset.cancel })); S.notice = "Visit canceled."; loadAvailability(); VIEWS.account(); }
-        catch (e) { VIEWS.account(); showErr(e.message); }
+        try {
+          const r = await capi("cancel", { token: S.token, id: btn.dataset.cancel });
+          setMe(r);
+          S.notice = !(r.credited > 0) ? "Visit canceled."
+            : r.applied > 0 ? `Visit canceled. ${money(r.credited)} went to your SnowHop credit, and ${money(r.applied)} of it paid toward your other upcoming visits.`
+            : `Visit canceled. ${money(r.credited)} went to your SnowHop credit.`;
+          loadAvailability(); VIEWS.account();
+        } catch (e) {
+          if (e.code === "cancel_closed") { try { setMe(await api("me", { token: S.token })); } catch (x) { /* show the old list */ } }
+          if (S.view === "account") { VIEWS.account(); showErr(e.message); }
+        }
       });
     }));
     foot(`<button class="btn btn-navy btn-block" type="button" id="go">Book a visit</button>`);
     $("#go").addEventListener("click", () => startBooking());
+  },
+
+  credit() {
+    const isNew = !S.token, list = packs(), best = bestPack(list), bal = myCredit();
+    if (!list.some((p) => p.pay === S.pack)) S.pack = (list[0] || {}).pay || null;
+    sBody.innerHTML = `
+      ${S.notice ? `<p class="form-ok">${esc(S.notice)}</p>` : ""}
+      ${isNew ? `<p class="intro">Credit goes on your SnowHop account and comes off your visits automatically.</p>`
+        : `<div class="credit-box"><div><span class="cb-l">Your credit</span><b>${money(bal)}</b><small>${bal ? "Comes off your next visits automatically." : "Buy a pack and it comes off your next visits."}</small></div></div>`}
+      <span class="legend" id="packLbl">Pick a credit pack</span>
+      <div class="pack-opts" role="radiogroup" aria-labelledby="packLbl">${list.map((p) => `<button type="button" role="radio" class="pack-opt" data-pack="${p.pay}" aria-checked="${p.pay === S.pack}"><b>${money(p.credit)}</b><span>credit for ${money(p.pay)}</span>${packTags(p, best)}</button>`).join("")}</div>
+      ${isNew ? `<div class="fields" style="margin-top:20px">${field("pin", "Create a 4-digit PIN", "password", { inputmode: "numeric", pattern: "[0-9]*", maxlength: 4, autocomplete: "new-password", class: "pin" }, "", `You'll use your phone number and this PIN to sign in and see your credit. Forgot it? Text ${esc(OWNER)}.`)}</div>` : ""}
+      <p class="fine">Credit never expires and can't be cashed out. It pays for your upcoming visits first, then comes off your next bookings.${payOn() ? "" : ` Online payments are off right now, so text ${esc(OWNER)} to buy credit.`}</p>`;
+    S.notice = "";
+    if (isNew) bindFields();
+    if (!payOn()) {
+      foot(`<a class="btn btn-navy btn-block" href="${smsHref}">Text ${esc(OWNER)} to buy credit</a>`);
+      return;
+    }
+    foot(`<button class="btn btn-navy btn-block" type="button" id="go"></button>`);
+    const go = $("#go");
+    const paint = () => {
+      const p = list.find((x) => x.pay === S.pack);
+      go.textContent = p ? `Buy ${money(p.credit)} credit · ${money(p.pay)}` : "Pick a pack";
+      go.disabled = !p;
+      $$(".pack-opt", sBody).forEach((x) => x.setAttribute("aria-checked", String(+x.dataset.pack === S.pack)));
+    };
+    $$(".pack-opt", sBody).forEach((b) => b.addEventListener("click", () => { S.pack = +b.dataset.pack; paint(); }));
+    paint();
+    go.addEventListener("click", async () => {
+      const p = list.find((x) => x.pay === S.pack);
+      if (!p) return;
+      if (!S.token && !setErr("pin", /^\d{4}$/.test(S.draft.pin) ? "" : "Pick 4 numbers for your PIN.")) { $("#f-pin").focus(); return; }
+      showErr(""); busy(go, true, "Opening payment…");
+      try {
+        if (!S.token) {
+          const d = S.draft;
+          setSession(await api("signup", { name: d.name, phone: phone10(d.phone), street: d.street, city: d.city, zip: d.zip, corner: !!d.corner, pin: d.pin, company: d.x_hp || "" }));
+          d.pin = "";
+          S.flow = null;
+        }
+        store.set("snowhop:creditAt", String(Date.now()));
+        location.href = (await capi("buy_credit", { token: S.token, pay: p.pay })).url;
+      } catch (e) {
+        busy(go, false);
+        if (e.code === "phone_taken") {
+          showErr(e.message, `That number already has an account. <button type="button" class="link-btn" id="errSignin">Sign in with your PIN</button> to buy credit.`);
+          $("#errSignin").addEventListener("click", () => { S.afterSignIn = "credit"; show("signin"); });
+        } else if (e.code === "out_of_area") showErr(outOfArea());
+        else {
+          if (S.token && isNew) show("credit");
+          if (e.code === "payments_off") { await loadAvailability(); show("credit"); }
+          showErr(e.message);
+        }
+      }
+    });
   },
 
   edit() {
@@ -1163,8 +1356,9 @@ const VIEWS = {
 
 async function submitBooking() {
   const d = S.draft, go = $("#go");
+  const price = quote(d.date).price, covered = price > 0 && myCredit() >= price;
   if (d.salt && !d.saltAck) { setErr("saltAck", "Check the box to add salting, or turn salting off."); $("#f-saltAck").focus(); return; }
-  if (!d.payChoice || (d.payChoice === "later" && !d.payPlan)) {
+  if (!covered && (!d.payChoice || (d.payChoice === "later" && !d.payPlan))) {
     setErr("pay", !d.payChoice ? "Pick how you'd like to pay." : "Pick how you'll pay after the job.");
     $("#e-pay").scrollIntoView({ block: "center" });
     return;
@@ -1178,10 +1372,10 @@ async function submitBooking() {
       S.flow = { steps: ["day", "finish"], i: 1 };
     }
     const r = await api("book", { token: S.token, date: d.date, salt: d.salt, salt_ack: d.salt && d.saltAck, notes: d.notes, quoted_price: quote(d.date).price,
-      pay_choice: d.payChoice, pay_plan: d.payChoice === "later" ? d.payPlan : null });
+      pay_choice: covered ? "later" : d.payChoice, pay_plan: !covered && d.payChoice === "later" ? d.payPlan : null });
     setMe(r);
     S.lastBooking = r.booking;
-    const payNow = d.payChoice === "now";
+    const payNow = !covered && d.payChoice === "now" && r.booking.pay_status !== "paid" && Number(r.booking.due) > 0;
     S.draft = freshDraft();
     loadAvailability();
     S.flow = null;
@@ -1189,7 +1383,7 @@ async function submitBooking() {
     if (payNow) {
       try {
         busy(go, true, "Opening payment…");
-        const p = await api("pay", { token: S.token, id: r.booking.id });
+        const p = await capi("pay", { token: S.token, id: r.booking.id });
         location.href = p.url;
         return;
       } catch (e) {
@@ -1234,6 +1428,24 @@ function startBooking(date) {
   show(S.flow.steps[0]);
   if (!S.avail || Date.now() - (S.availAt || 0) > 60000) loadAvailability().then(() => { if (S.view === "day") VIEWS.day(); });
 }
+
+// Buying credit: signed-in customers go straight to the packs; new customers make an account first.
+function startCredit(pay) {
+  if (pay) S.pack = pay;
+  if (!S.token) {
+    S.flow = { steps: ["info", "corner", "credit"], i: 0, kind: "credit" };
+    show("info");
+    return;
+  }
+  S.flow = null;
+  if (!S.me) {
+    openSheet(); $("#sheetTitle").textContent = TITLES.credit; $("#sheetStep").textContent = ""; sBody.innerHTML = `<div class="spin">One sec…</div>`; foot("");
+    api("me", { token: S.token }).then((r) => { setMe(r); show("credit"); }).catch(() => { S.afterSignIn = "credit"; show("signin"); });
+    return;
+  }
+  show("credit");
+}
+$("#packs").addEventListener("click", (e) => { const b = e.target.closest("[data-pack]"); if (b) startCredit(+b.dataset.pack); });
 
 $$("[data-book]").forEach((b) => b.addEventListener("click", () => startBooking()));
 $("#acctBtn").addEventListener("click", () => { S.flow = null; show(S.token ? "account" : "signin"); });
@@ -1576,7 +1788,27 @@ if (S.token) api("me", { token: S.token }).then(setMe).catch(() => {});
 loadWeather();
 loadChat();
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - (S.availAt || 0) > 120000) loadAvailability(); });
-const qs = new URLSearchParams(location.search), paidId = qs.get("paid"), unpaidId = qs.get("unpaid");
+const qs = new URLSearchParams(location.search), paidId = qs.get("paid"), unpaidId = qs.get("unpaid"), creditBack = qs.get("credit");
+// Back from buying credit: the webhook adds it a moment after Stripe's page closes.
+async function watchCredit() {
+  const at = Number(store.get("snowhop:creditAt")) || Date.now() - 3600000;
+  store.set("snowhop:creditAt", null);
+  for (let i = 0; i < 8; i++) {
+    await new Promise((r) => setTimeout(r, 2500));
+    let r;
+    try { r = await api("me", { token: S.token }); } catch (e) { return; }
+    setMe(r);
+    const got = S.me.credit_log.find((e) => e.kind === "purchase" && Date.parse(e.at) > at - 120000);
+    if (!got) continue;
+    if (S.view === "account") {
+      const used = S.me.credit < got.amount;
+      S.notice = `Thanks! ${money(got.amount)} credit was added to your account${used ? ", and it's already paying for your upcoming visits" : ""}.`;
+      VIEWS.account();
+    }
+    return;
+  }
+  if (S.view === "account") { S.notice = `Thanks for your payment! Your credit can take a minute to show up. Check back soon, or text ${OWNER} if it doesn't.`; VIEWS.account(); }
+}
 async function watchPayment(id) {
   for (let i = 0; i < 6; i++) {
     await new Promise((r) => setTimeout(r, 2500));
@@ -1593,6 +1825,10 @@ if ((paidId || unpaidId) && S.token) {
   S.notice = paidId ? "Thanks! Your payment went through." : "Payment wasn't finished. You can pay any time from here, or after the job.";
   show("account");
   if (paidId) watchPayment(paidId);
+} else if (creditBack && S.token) {
+  history.replaceState(null, "", location.pathname);
+  if (creditBack === "done") { S.notice = "Thanks! Adding your credit now…"; show("account"); watchCredit(); }
+  else { store.set("snowhop:creditAt", null); S.notice = "Checkout wasn't finished, so you weren't charged."; startCredit(); }
 } else if (location.hash === "#book") startBooking();
 else if (location.hash === "#account") show(S.token ? "account" : "signin");
 })();
