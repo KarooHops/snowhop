@@ -524,11 +524,11 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
   <section id="help">
     <div class="wrap">
       <h2>Questions? Ask Ethan</h2>
-      <p class="sub">Send a message and Ethan will reply within 48 hours, guaranteed. His reply shows up right here in this chat.</p>
+      <p class="sub">Send a message and Ethan will reply within 24 hours, guaranteed. His reply shows up right here in this chat.</p>
       <div class="chat" id="supportChat">
         <div class="chat-head">
           <span class="chat-av"><svg class="karoo" aria-hidden="true"><use href="#karoo"></use></svg></span>
-          <div><b>SnowHop support</b><small>Ethan replies within 48 hours, guaranteed</small></div>
+          <div><b>SnowHop support</b><small>Ethan replies within 24 hours, guaranteed</small></div>
         </div>
         <div class="chat-log" id="chatLog" role="log" aria-live="polite" aria-label="Support chat"></div>
         <form class="chat-form" id="chatForm" novalidate>
@@ -1410,6 +1410,7 @@ if ("IntersectionObserver" in window) {
 
 // ---- support chat ----
 const SUPPORT_API = cfg.supportUrl || String(API).replace(/snow-book\/?$/, "snow-support");
+const REPLY_HOURS = 24; // Ethan's reply promise
 const C = { key: store.get("snowhop:chat"), thread: null, step: "name", name: "", phone: "", draft: "", busy: false, visible: false, timer: null, ready: false };
 const chatLog = $("#chatLog"), chatField = $("#chatField"), chatSend = $("#chatSend"), chatErr = $("#chatErr"), chatFoot = $("#chatFoot");
 const sapi = (action, data) => api(action, data, SUPPORT_API);
@@ -1429,13 +1430,13 @@ function chatLogHtml() {
     const msgs = t.messages || [], last = msgs[msgs.length - 1];
     let h = msgs.map((m) => bubble(m.from, m.body, m.at)).join("");
     if (t.status === "closed") h += `<p class="chat-note">${esc(OWNER)} marked this as resolved. Send a message if you need anything else.</p>`;
-    else if (last && last.from === "customer") h += `<p class="chat-note">Sent. ${esc(OWNER)} will reply here within 48 hours, and may also call or text you at ${esc(fmtPhone(t.phone))}.</p>`;
+    else if (last && last.from === "customer") h += `<p class="chat-note">Sent. ${esc(OWNER)} will reply here within ${REPLY_HOURS} hours, and may also call or text you at ${esc(fmtPhone(t.phone))}.</p>`;
     return h;
   }
-  if (acct) return bubble("bot", `Hi ${firstName(acct.name)}! What's your question or concern? ${OWNER} replies within 48 hours, guaranteed.`);
+  if (acct) return bubble("bot", `Hi ${firstName(acct.name)}! What's your question or concern? ${OWNER} replies within ${REPLY_HOURS} hours, guaranteed.`);
   let h = bubble("bot", `Hi! I'll pass your question to ${OWNER}. What's your name?`);
   if (C.step !== "name") h += bubble("customer", C.name) + bubble("bot", `Thanks, ${firstName(C.name)}! What's the best phone number to reach you?`);
-  if (C.step === "message") h += bubble("customer", fmtPhone(C.phone)) + bubble("bot", `What's your question or concern? ${OWNER} replies within 48 hours, guaranteed.`);
+  if (C.step === "message") h += bubble("customer", fmtPhone(C.phone)) + bubble("bot", `What's your question or concern? ${OWNER} replies within ${REPLY_HOURS} hours, guaranteed.`);
   return h;
 }
 function renderChatLog() {

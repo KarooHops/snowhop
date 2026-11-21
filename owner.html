@@ -78,6 +78,7 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
 .sup-alert{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:12px 16px;border-radius:14px;background:#FEF0E6;color:#B54708;font-weight:700;text-decoration:none}
 .sup-alert.late{background:#FEE4E2;color:var(--err)}
 .sup-alert b{font-size:20px;line-height:1}
+.sup-alert small{display:block;margin-top:2px;font-size:14px;font-weight:600}
 h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
 .sup-note{margin:-4px 0 12px;font-size:14px}
 .tag.overdue{background:#FEE4E2;color:var(--err)}
@@ -90,6 +91,8 @@ h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
 .th-top{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap}
 .th-top b{font-size:16px}
 .th-meta{font-size:13px;color:var(--slate);margin-top:3px}
+.th-due{margin-top:3px;font-size:14px;font-weight:700;color:var(--navy)}
+.th-due.over{color:var(--err)}
 .th-last{margin:6px 0 0;font-size:14px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .th-body{padding:0 16px 16px;border-top:1px solid var(--line)}
 .th-msgs{display:flex;flex-direction:column;gap:8px;padding:14px 0;max-height:440px;overflow-y:auto}
@@ -212,7 +215,7 @@ h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
     <p class="updated" id="updated"></p>
 
     <h2 id="supportHead">Support<span class="tag due" id="supCount" hidden></span></h2>
-    <p class="muted sup-note">Messages from the chat on your website. You promise a reply within 48 hours.</p>
+    <p class="muted sup-note">Messages from your website chat. You promise a reply within 24 hours. Check here at the same time every day and answer everyone waiting, top to bottom.</p>
     <ul class="threads" id="threads"><li class="th-empty">Loading…</li></ul>
     <p class="err" id="supErr" hidden></p>
 
@@ -523,12 +526,23 @@ function ago(iso) {
   const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
   return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : timeOf(iso);
 }
-// Time left on the 48-hour promise, counted from the oldest message still waiting on a reply.
+// Time left on the 24-hour promise, counted from the oldest message still waiting on a reply.
+const REPLY_HOURS = 24;
 function due(t) {
   if (!t.waiting_since) return null;
-  const left = Date.parse(t.waiting_since) + 48 * HOUR - Date.now();
-  return left > 0 ? { soon: left <= 12 * HOUR, text: `Reply within ${Math.ceil(left / HOUR)}h` }
-    : { soon: true, text: `Overdue by ${Math.max(1, Math.floor(-left / HOUR))}h` };
+  const at = Date.parse(t.waiting_since) + REPLY_HOURS * HOUR, left = at - Date.now();
+  return left > 0 ? { at, soon: left <= 6 * HOUR, text: `Reply within ${Math.ceil(left / HOUR)}h` }
+    : { at, soon: true, text: `Overdue by ${Math.max(1, Math.floor(-left / HOUR))}h` };
+}
+// "today 3:12 PM", "tomorrow 9:05 AM" or "Sat, Nov 22 3:12 PM", in Ethan's time zone.
+function dueText(ms) {
+  const dayOf = (x) => new Date(x).toLocaleDateString("en-CA", { timeZone: TZ });
+  const time = new Date(ms).toLocaleTimeString("en-US", { timeZone: TZ, hour: "numeric", minute: "2-digit" });
+  const today = dayOf(Date.now()), d = dayOf(ms);
+  if (d === today) return `today ${time}`;
+  if (d === dayOf(Date.now() + 24 * HOUR)) return `tomorrow ${time}`;
+  if (d === dayOf(Date.now() - 24 * HOUR)) return `yesterday ${time}`;
+  return new Date(ms).toLocaleDateString("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric" }) + " " + time;
 }
 function threadTag(t) {
   const d = due(t);
@@ -555,7 +569,8 @@ function supportBadges() {
   if (waiting.length) {
     const first = due(waiting[0]);
     al.className = "sup-alert" + (soon.length ? " late" : "");
-    al.innerHTML = `<span>${waiting.length === 1 ? "1 message is" : waiting.length + " messages are"} waiting for a reply · ${esc(first.text.toLowerCase())}</span><b aria-hidden="true">›</b>`;
+    const over = waiting.filter((t) => due(t).at <= Date.now()).length;
+    al.innerHTML = `<span>${waiting.length === 1 ? "1 message" : waiting.length + " messages"} waiting for a reply<small>${over ? `${over} overdue` : `First one due ${esc(dueText(first.at))}`}</small></span><b aria-hidden="true">›</b>`;
   }
   document.title = (waiting.length ? `(${waiting.length}) ` : "") + "SnowHop · Ethan's list";
 }
@@ -589,7 +604,8 @@ function renderSupport() {
     return `<li class="thread${d ? (d.soon ? " late" : " waiting") : ""}">
       <button type="button" class="th-sum" data-toggle="${t.id}" aria-expanded="${open}">
         <div class="th-top"><b>${esc(t.name)}</b>${threadTag(t)}</div>
-        <div class="th-meta">${esc(fmtPhone(t.phone))} · ${t.message_count} message${t.message_count === 1 ? "" : "s"}${t.has_account ? " · has an account" : ""} · ${esc(ago(t.last_at))}</div>
+        <div class="th-meta">${esc(fmtPhone(t.phone))} · ${t.message_count} message${t.message_count === 1 ? "" : "s"}${t.has_account ? " · has an account" : ""}${d ? "" : " · " + esc(ago(t.last_at))}</div>
+        ${d ? `<div class="th-due${d.at > Date.now() ? "" : " over"}">${d.at > Date.now() ? "Due" : "Was due"} ${esc(dueText(d.at))}</div>` : ""}
         ${open ? "" : `<p class="th-last">${esc(last)}</p>`}
       </button>
       ${open ? threadBody(t) : ""}
