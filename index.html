@@ -134,7 +134,6 @@ h2{font-family:var(--display);font-weight:700;font-size:30px;line-height:1.15;le
 .map-panel{position:relative;aspect-ratio:4/3;background:#DCE6F0}
 .map-panel iframe,.map-panel img{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:contain;background:#DCE6F0}
 .map-panel .map-fallback{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:var(--slate)}
-.map-note{margin:0;padding:12px 16px;font-size:14px;color:var(--slate);border-top:1px solid var(--line)}
 
 /* how */
 .steps{list-style:none;margin:0;padding:0;display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(220px,100%),1fr))}
@@ -423,7 +422,6 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
           <button type="button" role="tab" id="tab-radar" aria-selected="false" aria-controls="mapPanel">Live radar</button>
         </div>
         <div class="map-panel" id="mapPanel" role="tabpanel"><div class="map-fallback">Loading map…</div></div>
-        <p class="map-note" id="mapNote"></p>
       </div>
     </div>
   </section>
@@ -1214,7 +1212,7 @@ function pickWxDay(date) {
 }
 
 // map tabs (loads when scrolled near)
-const mapPanel = $("#mapPanel"), mapNote = $("#mapNote");
+const mapPanel = $("#mapPanel");
 function setMap(kind) {
   $("#tab-snow").setAttribute("aria-selected", String(kind === "snow"));
   $("#tab-radar").setAttribute("aria-selected", String(kind === "radar"));
@@ -1222,12 +1220,10 @@ function setMap(kind) {
   if (kind === "snow") {
     const q = new URLSearchParams({ lat, lon, detailLat: lat, detailLon: lon, zoom: "8", level: "surface", overlay: "snowcover", product: "ecmwf", menu: "", message: "", marker: "true", calendar: "now", pressure: "", type: "map", location: "coordinates", detail: "", metricWind: "mph", metricTemp: "°F", radarRange: "-1" });
     mapPanel.innerHTML = `<iframe title="Snow depth forecast map" loading="lazy" src="https://embed.windy.com/embed2.html?${q}"></iframe>`;
-    mapNote.textContent = "Snow depth forecast by Windy.com. Drag the timeline to see how much snow is expected over the next few days.";
   } else {
     const site = String(WX.radarSite || "KFTG").toUpperCase();
     mapPanel.innerHTML = `<img alt="Animated weather radar for the ${esc(WX.place)} area" src="https://radar.weather.gov/ridge/standard/${site}_loop.gif?t=${Math.floor(Date.now() / 300000)}">`;
     $("img", mapPanel).addEventListener("error", () => { mapPanel.innerHTML = `<div class="map-fallback"><span>Radar isn't loading. <a href="https://radar.weather.gov/station/${site.toLowerCase()}/standard" target="_blank" rel="noopener">Open it on weather.gov</a></span></div>`; });
-    mapNote.textContent = "Live radar loop from the National Weather Service. Snow and rain show up as color.";
   }
 }
 $("#tab-snow").addEventListener("click", () => setMap("snow"));
