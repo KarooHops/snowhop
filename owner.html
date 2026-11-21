@@ -75,6 +75,33 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
 .refund-form{margin-top:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
 .refund-form label{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--slate)}
 .refund-form input{width:96px;min-height:40px;padding:0 10px;border:1.5px solid var(--field);border-radius:10px;background:#fff;font:inherit;font-size:16px;font-weight:700;color:var(--navy)}
+.sup-alert{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 14px;padding:12px 16px;border-radius:14px;background:#FEF0E6;color:#B54708;font-weight:700;text-decoration:none}
+.sup-alert.late{background:#FEE4E2;color:var(--err)}
+.sup-alert b{font-size:20px;line-height:1}
+h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
+.sup-note{margin:-4px 0 12px;font-size:14px}
+.tag.overdue{background:#FEE4E2;color:var(--err)}
+.threads{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.th-empty{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;color:var(--slate)}
+.thread{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.thread.waiting{border-color:#F5B88B}
+.thread.late{border-color:#F4A29A}
+.th-sum{display:block;width:100%;text-align:left;background:none;border:0;padding:14px 16px;cursor:pointer;font:inherit;color:inherit}
+.th-top{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap}
+.th-top b{font-size:16px}
+.th-meta{font-size:13px;color:var(--slate);margin-top:3px}
+.th-last{margin:6px 0 0;font-size:14px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.th-body{padding:0 16px 16px;border-top:1px solid var(--line)}
+.th-msgs{display:flex;flex-direction:column;gap:8px;padding:14px 0;max-height:440px;overflow-y:auto}
+.bub{max-width:86%;padding:9px 12px;border-radius:14px;font-size:15px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+.bub.cust{align-self:flex-start;background:var(--bg);border:1px solid var(--line);border-bottom-left-radius:5px}
+.bub.own{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:5px}
+.bub small{display:block;margin-top:3px;font-size:12px;opacity:.75}
+.th-body label{display:block;font-size:14px;font-weight:700;margin:4px 0 6px}
+.th-body textarea{display:block;width:100%;min-height:96px;padding:11px 14px;font:inherit;font-size:16px;line-height:1.45;color:var(--navy);background:#fff;border:1.5px solid var(--field);border-radius:12px;resize:vertical}
+.th-body textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,196,255,.45)}
+.th-acts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.th-acts.small{justify-content:space-between;margin-top:6px}
 .tag.refund{background:#EEF1F5;color:var(--slate)}
 .refund-form input{-moz-appearance:textfield;appearance:textfield}
 .refund-form input::-webkit-inner-spin-button,.refund-form input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
@@ -167,6 +194,7 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
   </section>
 
   <div id="app" hidden>
+    <a class="sup-alert" id="supAlert" href="#supportHead" hidden></a>
     <div class="strip" id="strip" aria-label="Next two weeks"></div>
     <div class="dayhead">
       <button class="icon-btn" type="button" id="prevDay" aria-label="Previous day"><svg aria-hidden="true"><use href="#prev"></use></svg></button>
@@ -182,6 +210,11 @@ input:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px rgba(124,
     <p class="err" id="dayErr" hidden></p>
     <ol class="stops" id="stops"></ol>
     <p class="updated" id="updated"></p>
+
+    <h2 id="supportHead">Support<span class="tag due" id="supCount" hidden></span></h2>
+    <p class="muted sup-note">Messages from the chat on your website. You promise a reply within 48 hours.</p>
+    <ul class="threads" id="threads"><li class="th-empty">Loading…</li></ul>
+    <p class="err" id="supErr" hidden></p>
 
     <h2>Look up a customer</h2>
     <div class="card">
@@ -235,9 +268,9 @@ const timeOf = (iso) => new Date(iso).toLocaleString("en-US", { timeZone: TZ, mo
 
 let code = store.get(KEY), day = ymd(new Date()), data = null, avail = null, timer = null;
 
-async function api(action, extra) {
+async function api(action, extra, url) {
   let res, body = null;
-  try { res = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ action, code }, extra)) }); }
+  try { res = await fetch(url || API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ action, code }, extra)) }); }
   catch (e) { throw Object.assign(new Error("Can't reach SnowHop. Check your connection."), { code: "network" }); }
   try { body = await res.json(); } catch (e) { /* not JSON */ }
   if (!res.ok || !body || body.ok !== true) {
@@ -394,7 +427,7 @@ async function refreshStrip() { try { const r = await api("owner_day", { date: d
 $("#prevDay").addEventListener("click", () => { day = addDays(day, -1); loadDay(); });
 $("#nextDay").addEventListener("click", () => { day = addDays(day, 1); loadDay(); });
 $("#todayBtn").addEventListener("click", () => { day = ymd(new Date()); loadDay(); });
-$("#refresh").addEventListener("click", () => loadDay());
+$("#refresh").addEventListener("click", () => { loadDay(); loadSupport(); });
 
 // ---- customer lookup ----
 $("#lkPhone").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#lkGo").click(); });
@@ -478,13 +511,132 @@ $("#payToggle").addEventListener("click", async () => {
   catch (e) { er.textContent = e.message; er.hidden = false; }
   t.disabled = false;
 });
+// ---- support inbox ----
+const SUPPORT_API = cfg.supportUrl || String(API).replace(/snow-book\/?$/, "snow-support");
+const SITE = new URL("./", location.href).href;
+const sapi = (action, extra) => api(action, extra, SUPPORT_API);
+const HOUR = 3600e3;
+let threads = [], openThread = null;
+const threadFull = {}, replyDrafts = new Map();
+const firstName = (n) => String(n || "").trim().split(/\s+/)[0] || "";
+function ago(iso) {
+  const m = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+  return m < 1 ? "just now" : m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : timeOf(iso);
+}
+// Time left on the 48-hour promise, counted from the oldest message still waiting on a reply.
+function due(t) {
+  if (!t.waiting_since) return null;
+  const left = Date.parse(t.waiting_since) + 48 * HOUR - Date.now();
+  return left > 0 ? { soon: left <= 12 * HOUR, text: `Reply within ${Math.ceil(left / HOUR)}h` }
+    : { soon: true, text: `Overdue by ${Math.max(1, Math.floor(-left / HOUR))}h` };
+}
+function threadTag(t) {
+  const d = due(t);
+  if (d) return `<span class="tag ${d.soon ? "overdue" : "due"}">${d.text}</span>`;
+  return t.status === "closed" ? `<span class="tag">Resolved</span>` : `<span class="tag paid">Answered</span>`;
+}
+async function loadSupport() {
+  try {
+    const r = await sapi("owner_support_list");
+    threads = r.threads || [];
+    if (openThread && threads.some((t) => t.id === openThread)) {
+      try { threadFull[openThread] = (await sapi("owner_support_thread", { id: openThread })).thread; } catch (e) { /* keep what we have */ }
+    }
+    const typing = document.activeElement && document.activeElement.matches("[data-reply-box]");
+    typing ? supportBadges() : renderSupport();
+  } catch (e) {
+    if (e.code !== "owner") { $("#supErr").textContent = e.message; $("#supErr").hidden = false; }
+  }
+}
+function supportBadges() {
+  const waiting = threads.filter((t) => t.waiting_since), soon = waiting.filter((t) => due(t).soon);
+  const cnt = $("#supCount"); cnt.hidden = !waiting.length; cnt.textContent = `${waiting.length} waiting`;
+  const al = $("#supAlert"); al.hidden = !waiting.length;
+  if (waiting.length) {
+    const first = due(waiting[0]);
+    al.className = "sup-alert" + (soon.length ? " late" : "");
+    al.innerHTML = `<span>${waiting.length === 1 ? "1 message is" : waiting.length + " messages are"} waiting for a reply · ${esc(first.text.toLowerCase())}</span><b aria-hidden="true">›</b>`;
+  }
+  document.title = (waiting.length ? `(${waiting.length}) ` : "") + "SnowHop · Ethan's list";
+}
+function threadBody(t) {
+  const full = threadFull[t.id], msgs = full ? full.messages : null;
+  const text = `Hi ${firstName(t.name)}, it's Ethan from SnowHop. I replied to your message on our website: ${SITE}#help`;
+  return `<div class="th-body">
+    <div class="th-msgs" data-msgs="${t.id}">${msgs ? msgs.map((m) => `<div class="bub ${m.from === "owner" ? "own" : "cust"}">${esc(m.body)}<small>${m.from === "owner" ? "You" : esc(firstName(t.name))} · ${esc(timeOf(m.at))}</small></div>`).join("") : `<div class="spin">Loading…</div>`}</div>
+    <label for="rp-${t.id}">Your reply</label>
+    <textarea id="rp-${t.id}" data-reply-box="${t.id}" maxlength="2000" placeholder="${esc(firstName(t.name))} will see this in the chat on your website."></textarea>
+    <p class="err" data-reply-err="${t.id}" hidden></p>
+    <div class="th-acts">
+      <button type="button" class="btn btn-navy" data-reply="${t.id}">Send reply</button>
+      <a class="btn btn-outline" href="tel:+1${t.phone}"><svg aria-hidden="true"><use href="#phone"></use></svg>Call</a>
+      <a class="btn btn-outline" href="sms:+1${t.phone}?&body=${encodeURIComponent(text)}"><svg aria-hidden="true"><use href="#chat"></use></svg>Text</a>
+    </div>
+    <div class="th-acts small">
+      <button type="button" class="link-btn" data-close="${t.id}" data-closed="${t.status === "closed" ? "" : "1"}">${t.status === "closed" ? "Reopen" : "Mark resolved"}</button>
+      <button type="button" class="link-btn danger" data-del="${t.id}">Delete</button>
+    </div>
+  </div>`;
+}
+function renderSupport() {
+  supportBadges();
+  $("#supErr").hidden = true;
+  const ul = $("#threads");
+  if (!threads.length) { ul.innerHTML = `<li class="th-empty">No messages yet. When someone uses the chat on your website, it shows up here.</li>`; return; }
+  ul.innerHTML = threads.map((t) => {
+    const d = due(t), open = openThread === t.id;
+    const last = t.last ? (t.last.from === "owner" ? "You: " : "") + t.last.body : "";
+    return `<li class="thread${d ? (d.soon ? " late" : " waiting") : ""}">
+      <button type="button" class="th-sum" data-toggle="${t.id}" aria-expanded="${open}">
+        <div class="th-top"><b>${esc(t.name)}</b>${threadTag(t)}</div>
+        <div class="th-meta">${esc(fmtPhone(t.phone))} · ${t.message_count} message${t.message_count === 1 ? "" : "s"}${t.has_account ? " · has an account" : ""} · ${esc(ago(t.last_at))}</div>
+        ${open ? "" : `<p class="th-last">${esc(last)}</p>`}
+      </button>
+      ${open ? threadBody(t) : ""}
+    </li>`;
+  }).join("");
+  for (const [id, v] of replyDrafts) { const box = $(`[data-reply-box="${id}"]`); if (box) box.value = v; }
+  $$("[data-msgs]").forEach((m) => (m.scrollTop = m.scrollHeight));
+  $$("[data-toggle]").forEach((b) => b.addEventListener("click", async () => {
+    const id = b.dataset.toggle;
+    openThread = openThread === id ? null : id;
+    renderSupport();
+    if (openThread === id && !threadFull[id]) {
+      try { threadFull[id] = (await sapi("owner_support_thread", { id })).thread; renderSupport(); }
+      catch (e) { $("#supErr").textContent = e.message; $("#supErr").hidden = false; }
+    }
+  }));
+  $$("[data-reply-box]").forEach((box) => box.addEventListener("input", () => replyDrafts.set(box.dataset.replyBox, box.value)));
+  $$("[data-reply]").forEach((btn) => btn.addEventListener("click", async () => {
+    const id = btn.dataset.reply, box = $(`[data-reply-box="${id}"]`), er = $(`[data-reply-err="${id}"]`), msg = box.value.trim();
+    if (!msg) { er.textContent = "Type a reply first."; er.hidden = false; box.focus(); return; }
+    btn.disabled = true; btn.textContent = "Sending…"; er.hidden = true;
+    try {
+      const r = await sapi("owner_support_reply", { id, message: msg });
+      threadFull[id] = r.thread; threads = r.threads || threads; replyDrafts.delete(id);
+      renderSupport();
+    } catch (e) { btn.disabled = false; btn.textContent = "Send reply"; er.textContent = e.message; er.hidden = false; }
+  }));
+  $$("[data-close]").forEach((btn) => btn.addEventListener("click", async () => {
+    const id = btn.dataset.close; btn.disabled = true;
+    try { const r = await sapi("owner_support_close", { id, closed: !!btn.dataset.closed }); threadFull[id] = r.thread; threads = r.threads || threads; renderSupport(); }
+    catch (e) { btn.disabled = false; $("#supErr").textContent = e.message; $("#supErr").hidden = false; }
+  }));
+  $$("[data-del]").forEach((btn) => btn.addEventListener("click", async () => {
+    if (!btn.dataset.sure) { btn.dataset.sure = "1"; btn.textContent = "Tap again to delete this conversation"; return; }
+    const id = btn.dataset.del; btn.disabled = true;
+    try { const r = await sapi("owner_support_delete", { id }); threads = r.threads || []; openThread = null; delete threadFull[id]; replyDrafts.delete(id); renderSupport(); }
+    catch (e) { btn.disabled = false; $("#supErr").textContent = e.message; $("#supErr").hidden = false; }
+  }));
+}
+
 function start() {
   $("#gate").hidden = true; $("#app").hidden = false;
-  loadDay(); loadReviews(); loadPayments();
+  loadDay(); loadReviews(); loadPayments(); loadSupport();
   clearInterval(timer);
-  timer = setInterval(() => { if (!document.hidden && code) loadDay(true); }, 60000);
+  timer = setInterval(() => { if (!document.hidden && code) { loadDay(true); loadSupport(); } }, 60000);
 }
-document.addEventListener("visibilitychange", () => { if (!document.hidden && code && !$("#app").hidden) loadDay(true); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && code && !$("#app").hidden) { loadDay(true); loadSupport(); } });
 if (code) start(); else lock("");
 })();
 </script>

@@ -358,6 +358,40 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
   .map-panel{aspect-ratio:16/8}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* support chat */
+.top-actions{display:flex;align-items:center;gap:4px}
+.top-link{color:#fff;font-weight:700;font-size:15px;text-decoration:none;padding:10px 12px;border-radius:10px}
+.top-link:hover{background:rgba(255,255,255,.1)}
+@media (max-width:480px){.top .wrap{gap:10px}#acctBtn{padding:0 14px}#acctBtn svg{display:none}}
+@media (max-width:370px){.top .wordmark{font-size:20px}.top-link{padding:10px 8px}}
+@media (max-width:340px){.top-link{display:none}}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.reply-bar{background:var(--gold);color:var(--navy)}
+.reply-bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;font-weight:700}
+.reply-bar a{color:var(--navy);font-weight:800;white-space:nowrap}
+#help .sub{max-width:600px}
+.chat{max-width:640px;background:#fff;border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(11,37,69,.06)}
+.chat-head{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--navy);color:#fff}
+.chat-av{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.12);display:grid;place-items:center;flex:none}
+.chat-av .karoo{width:26px;height:28px;color:#fff}
+.chat-head b{display:block;font-size:16px}
+.chat-head small{display:block;color:#BFD3E8;font-size:13px}
+.chat-log{display:flex;flex-direction:column;gap:10px;padding:16px;min-height:200px;max-height:440px;overflow-y:auto;background:var(--bg)}
+.msg{max-width:84%;padding:10px 14px;border-radius:16px;font-size:15px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.them{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:6px}
+.msg.me{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:6px}
+.msg .who{display:block;font-size:12px;font-weight:700;color:var(--slate);margin-bottom:2px}
+.msg.owner .who{color:var(--blue)}
+.msg small{display:block;margin-top:4px;font-size:12px;opacity:.75}
+.chat-note{align-self:center;max-width:92%;margin:0;font-size:13px;color:var(--slate);text-align:center}
+.chat-form{display:flex;gap:10px;align-items:flex-end;padding:12px;border-top:1px solid var(--line);background:#fff}
+.chat-field{flex:1;min-width:0}
+.chat-form input[type=text],.chat-form input[type=tel],.chat-form textarea{min-height:48px}
+.chat-form textarea{height:48px;max-height:160px;resize:none;line-height:1.4}
+.chat-form .btn{flex:none;min-height:48px;padding:0 18px}
+.chat-foot{display:flex;justify-content:space-between;align-items:center;gap:6px 12px;flex-wrap:wrap;padding:0 14px 12px;font-size:13px;color:var(--slate);background:#fff}
+.chat-foot .link-btn{font-size:13px;padding:2px 0}
+.chat > .err{margin:0;padding:0 14px 12px;background:#fff}
 </style>
 </head>
 <body>
@@ -391,11 +425,15 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
       <svg class="karoo" aria-hidden="true"><use href="#karoo"></use></svg>
       <span class="wordmark">Snow<span>Hop</span></span>
     </a>
-    <button class="btn btn-ghost btn-small" type="button" id="acctBtn"><svg aria-hidden="true"><use href="#user"></use></svg><span id="acctLabel">Sign in</span></button>
+    <div class="top-actions">
+      <a class="top-link" href="#help">Help</a>
+      <button class="btn btn-ghost btn-small" type="button" id="acctBtn"><svg aria-hidden="true"><use href="#user"></use></svg><span id="acctLabel">Sign in</span></button>
+    </div>
   </div>
 </header>
 
 <main id="top">
+  <div class="reply-bar" id="replyBar" hidden><div class="wrap"><span>Ethan replied to your message.</span><a href="#help">Read it</a></div></div>
   <section class="hero">
     <div class="wrap">
       <div>
@@ -482,6 +520,27 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
       <div class="rv-cta"><button class="btn btn-outline" type="button" id="rvWrite">Write a review</button><p id="rvHint" hidden></p></div>
     </div>
   </section>
+
+  <section id="help">
+    <div class="wrap">
+      <h2>Questions? Ask Ethan</h2>
+      <p class="sub">Send a message and Ethan will reply within 48 hours, guaranteed. His reply shows up right here in this chat.</p>
+      <div class="chat" id="supportChat">
+        <div class="chat-head">
+          <span class="chat-av"><svg class="karoo" aria-hidden="true"><use href="#karoo"></use></svg></span>
+          <div><b>SnowHop support</b><small>Ethan replies within 48 hours, guaranteed</small></div>
+        </div>
+        <div class="chat-log" id="chatLog" role="log" aria-live="polite" aria-label="Support chat"></div>
+        <form class="chat-form" id="chatForm" novalidate>
+          <input class="hp" type="text" id="chatHp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="chat-field" id="chatField"></div>
+          <button class="btn btn-navy" type="submit" id="chatSend">Next</button>
+        </form>
+        <p class="err" id="chatErr" hidden></p>
+        <div class="chat-foot" id="chatFoot" hidden></div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer>
@@ -543,10 +602,10 @@ function ymd(date, tz) {
 const hourLabel = (h) => (h % 12 || 12) + (h < 12 || h === 24 ? " AM" : " PM");
 
 // ---- API ----
-async function api(action, data) {
+async function api(action, data, url) {
   let res, body = null;
   try {
-    res = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ action }, data)) });
+    res = await fetch(url || API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ action }, data)) });
   } catch (e) {
     throw Object.assign(new Error("Can't reach SnowHop right now. Check your connection and try again."), { code: "network" });
   }
@@ -589,11 +648,13 @@ function setMe(r) {
   S.me = { customer: r.customer, bookings: r.bookings || [], review: r.review || null, can_review: !!r.can_review, today: r.today };
   $("#acctLabel").textContent = "My visits";
   updateReviewCta();
+  chatOnAccount();
 }
 function forgetSession() {
   S.token = null; S.me = null; store.set("snowhop:token", null);
   $("#acctLabel").textContent = "Sign in";
   updateReviewCta();
+  chatOnAccount();
 }
 const pricing = () => (S.avail && S.avail.pricing) || { base: 30, corner: 40, next_day_discount: 10 };
 const today = () => (S.avail && S.avail.today) || ymd(new Date(), TZ);
@@ -1347,6 +1408,163 @@ if ("IntersectionObserver" in window) {
   io.observe($("#mapCard"));
 } else setMap("snow");
 
+// ---- support chat ----
+const SUPPORT_API = cfg.supportUrl || String(API).replace(/snow-book\/?$/, "snow-support");
+const C = { key: store.get("snowhop:chat"), thread: null, step: "name", name: "", phone: "", draft: "", busy: false, visible: false, timer: null, ready: false };
+const chatLog = $("#chatLog"), chatField = $("#chatField"), chatSend = $("#chatSend"), chatErr = $("#chatErr"), chatFoot = $("#chatFoot");
+const sapi = (action, data) => api(action, data, SUPPORT_API);
+const firstName = (n) => String(n || "").trim().split(/\s+/)[0] || "";
+const msgTime = (at) => new Date(at).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+const chatAuth = () => (C.key ? { chat: C.key } : S.token ? { token: S.token } : null);
+const account = () => (S.me && S.me.customer ? S.me.customer : null);
+
+function bubble(from, body, at) {
+  const mine = from === "customer";
+  const who = from === "owner" ? OWNER : "SnowHop";
+  return `<div class="msg ${mine ? "me" : "them " + from}">${mine ? "" : `<span class="who">${esc(who)}</span>`}${esc(body)}${at ? `<small>${esc(msgTime(at))}</small>` : ""}</div>`;
+}
+function chatLogHtml() {
+  const t = C.thread, acct = account();
+  if (t) {
+    const msgs = t.messages || [], last = msgs[msgs.length - 1];
+    let h = msgs.map((m) => bubble(m.from, m.body, m.at)).join("");
+    if (t.status === "closed") h += `<p class="chat-note">${esc(OWNER)} marked this as resolved. Send a message if you need anything else.</p>`;
+    else if (last && last.from === "customer") h += `<p class="chat-note">Sent. ${esc(OWNER)} will reply here within 48 hours, and may also call or text you at ${esc(fmtPhone(t.phone))}.</p>`;
+    return h;
+  }
+  if (acct) return bubble("bot", `Hi ${firstName(acct.name)}! What's your question or concern? ${OWNER} replies within 48 hours, guaranteed.`);
+  let h = bubble("bot", `Hi! I'll pass your question to ${OWNER}. What's your name?`);
+  if (C.step !== "name") h += bubble("customer", C.name) + bubble("bot", `Thanks, ${firstName(C.name)}! What's the best phone number to reach you?`);
+  if (C.step === "message") h += bubble("customer", fmtPhone(C.phone)) + bubble("bot", `What's your question or concern? ${OWNER} replies within 48 hours, guaranteed.`);
+  return h;
+}
+function renderChatLog() {
+  const atEnd = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 40;
+  chatLog.innerHTML = chatLogHtml();
+  if (atEnd || !C.ready) chatLog.scrollTop = chatLog.scrollHeight;
+}
+function renderChat(focus) {
+  const acct = account();
+  if (C.thread || acct) C.step = "message";
+  else if (C.step === "message" && (!C.name || !C.phone)) C.step = "name";
+  renderChatLog();
+  chatLog.scrollTop = chatLog.scrollHeight;
+  const textArea = (ph) => `<label class="sr-only" for="chatInput">Your message</label><textarea id="chatInput" rows="1" maxlength="1000" placeholder="${ph}"></textarea>`;
+  chatField.innerHTML = C.step === "name"
+    ? `<label class="sr-only" for="chatInput">Your name</label><input id="chatInput" type="text" autocomplete="name" maxlength="80" placeholder="Your name">`
+    : C.step === "phone"
+      ? `<label class="sr-only" for="chatInput">Phone number</label><input id="chatInput" type="tel" inputmode="tel" autocomplete="tel" placeholder="(303) 555-0123">`
+      : textArea(C.thread ? "Write a message…" : "Type your question…");
+  chatSend.textContent = C.step === "message" ? "Send" : "Next";
+  const who = C.thread ? { name: C.thread.name, phone: C.thread.phone } : acct;
+  chatFoot.innerHTML = who ? `<span>Chatting as ${esc(who.name)} · ${esc(fmtPhone(who.phone))}</span>`
+    : C.step !== "name" ? `<span></span><button type="button" class="link-btn" id="chatRestart">Start over</button>` : "";
+  chatFoot.hidden = !chatFoot.innerHTML;
+  const inp = $("#chatInput");
+  if (C.step === "name") inp.value = C.name || S.draft.name || "";
+  else if (C.step === "phone") inp.value = C.phone ? fmtPhone(C.phone) : S.draft.phone ? fmtPhone(S.draft.phone) : "";
+  else { inp.value = C.draft; grow(inp); }
+  inp.addEventListener("input", () => {
+    chatErr.hidden = true;
+    if (C.step === "phone") {
+      const d = phone10(inp.value).slice(0, 10);
+      if (/^\D*1?\d{10}\D*$/.test(inp.value) || inp.value.length > 13) inp.value = fmtPhone(d);
+    } else if (C.step === "message") { C.draft = inp.value; grow(inp); }
+  });
+  const rs = $("#chatRestart");
+  if (rs) rs.addEventListener("click", () => { C.step = "name"; C.name = ""; C.phone = ""; chatErr.hidden = true; renderChat(true); });
+  if (focus) inp.focus({ preventScroll: true });
+}
+function grow(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight + 3, 160) + "px"; }
+function chatError(msg) { chatErr.textContent = msg; chatErr.hidden = false; const i = $("#chatInput"); if (i) i.focus({ preventScroll: true }); }
+
+$("#chatForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (C.busy) return;
+  const inp = $("#chatInput"), v = inp.value;
+  chatErr.hidden = true;
+  if (C.step === "name") {
+    const n = v.replace(/\s+/g, " ").trim();
+    if (!n) return chatError("Add your name.");
+    C.name = n.slice(0, 80); C.step = "phone"; return renderChat(true);
+  }
+  if (C.step === "phone") {
+    const d = phone10(v);
+    if (!/^[2-9]\d{2}[2-9]\d{6}$/.test(d)) return chatError("Enter a 10-digit phone number.");
+    C.phone = d; C.step = "message"; return renderChat(true);
+  }
+  const msg = v.trim();
+  if (!msg) return chatError("Type your question first.");
+  if (msg.length > 1000) return chatError("Keep it under 1,000 characters.");
+  C.busy = true; chatSend.disabled = true; chatSend.textContent = "Sending…";
+  try {
+    const auth = chatAuth();
+    const acct = account();
+    const r = C.thread && auth
+      ? await sapi("support_send", Object.assign({ message: msg }, auth))
+      : await sapi("support_start", { message: msg, name: acct ? acct.name : C.name, phone: acct ? acct.phone : C.phone, token: S.token || undefined, company: $("#chatHp").value });
+    if (r.chat) { C.key = r.chat; store.set("snowhop:chat", r.chat); }
+    C.thread = r.thread; C.draft = "";
+    renderChat(true);
+    $("#replyBar").hidden = true;
+    pollChat();
+  } catch (err) {
+    if (err.code === "not_found") { C.key = null; store.set("snowhop:chat", null); C.thread = null; renderChat(); }
+    chatError(err.message);
+  } finally {
+    C.busy = false; chatSend.disabled = false; chatSend.textContent = C.step === "message" ? "Send" : "Next";
+  }
+});
+
+async function loadChat() {
+  const auth = chatAuth();
+  if (!auth) { C.thread = null; C.ready = true; renderChat(); return; }
+  try {
+    const r = await sapi("support_get", Object.assign({ seen: C.visible }, auth));
+    C.thread = r.thread;
+    if (r.thread.unread > 0 && !C.visible) $("#replyBar").hidden = false;
+    pollChat();
+  } catch (e) {
+    if (e.code === "not_found" && auth.chat) { C.key = null; store.set("snowhop:chat", null); }
+    if (e.code === "not_found") C.thread = null;
+  }
+  C.ready = true;
+  renderChat();
+  if (C.visible) markChatSeen();
+}
+function chatOnAccount() {
+  if (!C.ready) return;
+  if (!C.key) { C.thread = null; if (S.token) return loadChat(); }
+  renderChat();
+}
+// New replies while the page is open. Only re-draws the messages, so typing isn't interrupted.
+function pollChat() {
+  clearInterval(C.timer);
+  C.timer = setInterval(async () => {
+    const auth = chatAuth();
+    if (document.hidden || !C.thread || !auth) return;
+    try {
+      const r = await sapi("support_get", Object.assign({ seen: C.visible }, auth));
+      const before = (C.thread.messages || []).length, wasStatus = C.thread.status;
+      C.thread = r.thread;
+      if ((r.thread.messages || []).length !== before || r.thread.status !== wasStatus) renderChatLog();
+      if (r.thread.unread > 0 && !C.visible) $("#replyBar").hidden = false;
+    } catch (e) { /* try again next time */ }
+  }, 60000);
+}
+async function markChatSeen() {
+  const auth = chatAuth();
+  if (!C.thread || !auth || !(C.thread.unread > 0)) return;
+  try { const r = await sapi("support_get", Object.assign({ seen: true }, auth)); C.thread = r.thread; C.thread.unread = 0; } catch (e) { /* later */ }
+  $("#replyBar").hidden = true;
+}
+if ("IntersectionObserver" in window) {
+  new IntersectionObserver((ents) => {
+    C.visible = ents.some((e) => e.isIntersecting);
+    if (C.visible) markChatSeen();
+  }, { threshold: 0.3 }).observe($("#supportChat"));
+}
+
 // ---- start ----
 $$(".js-tel").forEach((a) => (a.href = telHref));
 $$(".js-sms").forEach((a) => (a.href = smsHref));
@@ -1355,6 +1573,7 @@ loadAvailability();
 api("reviews").then((r) => { S.reviews = r; renderReviews(); }).catch(() => {});
 if (S.token) api("me", { token: S.token }).then(setMe).catch(() => {});
 loadWeather();
+loadChat();
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - (S.availAt || 0) > 120000) loadAvailability(); });
 const qs = new URLSearchParams(location.search), paidId = qs.get("paid"), unpaidId = qs.get("unpaid");
 async function watchPayment(id) {
