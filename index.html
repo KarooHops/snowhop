@@ -317,6 +317,13 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
 .done svg{width:60px;height:60px;color:var(--blue)}
 .done h3{font-family:var(--display);font-size:30px;margin:10px 0 4px}
 .done .big{font-size:19px;font-weight:700;margin:0 0 4px}
+.cal-add{margin:4px 0 18px;text-align:center}
+.cal-add .legend{display:block;margin:0 0 8px}
+.cal-btns{display:flex;gap:10px}
+.cal-btns .btn{flex:1 1 0;min-width:0;padding:0 12px;font-size:15px}
+@media (max-width:360px){.cal-btns{flex-direction:column}}
+.visit .vcal{display:block;margin-top:2px;font-size:14px}
+.visit .vcal a{font-weight:600}
 .done p{color:var(--slate);margin:0 0 6px}
 .acct{border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin:0 0 20px}
 .acct b{font-size:17px}
@@ -447,6 +454,7 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
   <symbol id="pin" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></g></symbol>
   <symbol id="card" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/></g></symbol>
   <symbol id="clock" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 6v6l4 2"/></symbol>
+  <symbol id="cal" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zM16 2v4M8 2v4M3 10h18"/></symbol>
   <symbol id="warn" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0zM12 9v4M12 17h.01"/></symbol>
   <symbol id="i-sun" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/></g></symbol>
   <symbol id="i-moon" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M20.5 14.5A8.5 8.5 0 1 1 9.5 3.5a6.8 6.8 0 0 0 11 11z"/></symbol>
@@ -757,9 +765,45 @@ function fmtWhen(iso) {
   if (isNaN(d)) return "";
   const p = {};
   for (const x of new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(d)) p[x.type] = x.value;
-  return `${p.weekday}, ${p.month} ${p.day}, ${p.hour}${p.minute === "00" ? "" : ":" + p.minute} ${String(p.dayPeriod || "").toUpperCase()}`;
+  return `${p.weekday}, ${p.month} ${p.day}, ${p.hour}${p.minute === "00" ? "" : ":" + p.minute}\u00a0${String(p.dayPeriod || "").toUpperCase()}`;
 }
 const canCancel = (b) => !!b && b.status === "booked" && !!b.cancel_until && Date.now() < Date.parse(b.cancel_until);
+
+// ---- add to calendar ----
+// An all-day event for the visit: a Google Calendar link, and an .ics file for Apple Calendar and Outlook.
+const icsText = (v) => String(v || "").replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+function icsFold(line) {
+  const enc = new TextEncoder(), out = [];
+  let cur = "", bytes = 0;
+  for (const ch of line) {
+    const n = enc.encode(ch).length;
+    if (bytes + n > (out.length ? 74 : 75)) { out.push(cur); cur = ""; bytes = 0; }
+    cur += ch; bytes += n;
+  }
+  out.push(cur);
+  return out.join("\r\n ");
+}
+function visitCal(b) {
+  const c = (S.me && S.me.customer) || {}, site = location.href.split(/[?#]/)[0];
+  const where = [b.street || c.street, [b.city || c.city, b.zip || c.zip].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  const next = new Date(`${b.date}T12:00:00Z`); next.setUTCDate(next.getUTCDate() + 1);
+  const start = b.date.replace(/-/g, ""), end = next.toISOString().slice(0, 10).replace(/-/g, "");
+  const title = b.salt ? "SnowHop snow clearing + salting" : "SnowHop snow clearing";
+  const details = [
+    `${OWNER} clears your driveway and sidewalk any time this day, 12 AM to 11:59 PM.`,
+    canCancel(b) ? `Free to cancel until ${fmtWhen(b.cancel_until)} in My visits.` : "",
+    `Questions? Call or text ${OWNER} at ${fmtPhone(cfg.phone)}.`,
+    `My visits: ${site}#account`,
+  ].filter(Boolean).join("\n");
+  const google = "https://calendar.google.com/calendar/render?" + new URLSearchParams({ action: "TEMPLATE", text: title, dates: `${start}/${end}`, details, location: where });
+  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//SnowHop//Visits//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+    "BEGIN:VEVENT", `UID:${b.id}@snowhop`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${start}`, `DTEND;VALUE=DATE:${end}`,
+    `SUMMARY:${icsText(title)}`, `LOCATION:${icsText(where)}`, `DESCRIPTION:${icsText(details)}`, `URL:${site}#account`, "TRANSP:TRANSPARENT",
+    "BEGIN:VALARM", "ACTION:DISPLAY", `DESCRIPTION:${icsText("SnowHop clears your driveway tomorrow")}`, "TRIGGER:-PT6H", "END:VALARM",
+    "END:VEVENT", "END:VCALENDAR"].map(icsFold).join("\r\n") + "\r\n";
+  return { google, ics: "data:text/calendar;charset=utf-8," + encodeURIComponent(ics), file: `SnowHop-${b.date}.ics` };
+}
 function renderPacks() {
   const list = packs(), best = bestPack(list);
   $("#packsWrap").hidden = !list.length;
@@ -1097,6 +1141,9 @@ const VIEWS = {
         <p>${esc(payText)}</p>
       </div>
       ${S.payNote ? `<p class="form-error" style="margin:0 0 14px">${esc(S.payNote)}</p>` : ""}
+      ${b.id && b.date ? (() => { const cal = visitCal(b); return `<div class="cal-add"><span class="legend">Add it to your calendar</span><div class="cal-btns">
+        <a class="btn btn-outline" id="calGoogle" href="${esc(cal.google)}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#cal"></use></svg>Google</a>
+        <a class="btn btn-outline" id="calIcs" href="${cal.ics}" download="${cal.file}"><svg aria-hidden="true"><use href="#cal"></use></svg>Apple / Outlook</a></div></div>`; })() : ""}
       <p class="fine" style="text-align:center">${esc(OWNER)} will clear it any time that day, 12 AM to 11:59 PM.</p>
       <p class="fine" style="text-align:center">Questions or changes? Call or text ${esc(OWNER)} at <a href="${telHref}">${esc(fmtPhone(cfg.phone))}</a>.${canCancel(b) ? ` You can cancel from My visits until ${esc(fmtWhen(b.cancel_until))}.` : ""}</p>`;
     foot(`<div class="foot-row"><button class="btn btn-outline btn-block" type="button" id="toAcct">My visits</button><button class="btn btn-navy btn-block" type="button" id="go">Done</button></div>`);
@@ -1161,7 +1208,7 @@ const VIEWS = {
     const visit = (b, isPast) => {
       const open = !isPast && canCancel(b);
       return `<li class="visit${isPast ? " past" : ""}" data-id="${b.id}">
-        <div><b>${esc(shortDay(b.date))}</b><span>$${b.price}${b.discount ? ` (next-day, $${b.discount} off)` : ""}${b.multiplier > 1 ? ` (after ${lateTime()}, ×${b.multiplier})` : ""} · ${b.salt ? "Free salting" : "No salt"}</span>${payLine(b)}${isPast ? "" : `<span class="vc">${open ? `Free to cancel until ${esc(fmtWhen(b.cancel_until))}` : `Too late to cancel online. Call or text ${esc(OWNER)}.`}</span>`}${b.notes && !isPast ? `<span class="vn">${esc(b.notes)}</span>` : ""}</div>
+        <div><b>${esc(shortDay(b.date))}</b><span>$${b.price}${b.discount ? ` (next-day, $${b.discount} off)` : ""}${b.multiplier > 1 ? ` (after ${lateTime()}, ×${b.multiplier})` : ""} · ${b.salt ? "Free salting" : "No salt"}</span>${payLine(b)}${isPast ? "" : `<span class="vc">${open ? `Free to cancel until ${esc(fmtWhen(b.cancel_until))}` : `Too late to cancel online. Call or text ${esc(OWNER)}.`}</span><span class="vcal"><button type="button" class="link-btn" data-cal="${b.id}">Add to calendar</button></span>`}${b.notes && !isPast ? `<span class="vn">${esc(b.notes)}</span>` : ""}</div>
         ${isPast ? `<span class="st ${b.status}">${b.status === "done" ? "Done" : b.status === "canceled" ? "Canceled" : "Past"}</span>` : open ? `<button type="button" class="cancel-btn" data-cancel="${b.id}">Cancel</button>` : ""}
       </li>`;
     };
@@ -1200,6 +1247,13 @@ const VIEWS = {
     });
     const rv = $("#toReview"); if (rv) rv.addEventListener("click", () => show("review"));
     const tc = $("#toCredit"); if (tc) tc.addEventListener("click", () => show("credit"));
+    $$("[data-cal]", sBody).forEach((btn) => btn.addEventListener("click", () => {
+      const bk = S.me.bookings.find((x) => x.id === btn.dataset.cal);
+      if (!bk) return;
+      const cal = visitCal(bk), holder = btn.parentElement;
+      holder.innerHTML = `Add to: <a href="${esc(cal.google)}" target="_blank" rel="noopener">Google</a> · <a href="${cal.ics}" download="${cal.file}">Apple / Outlook</a>`;
+      holder.querySelector("a").focus();
+    }));
     $("#signOut").addEventListener("click", async () => { const tk = S.token; forgetSession(); closeSheet(); try { await api("logout", { token: tk }); } catch (e) { /* already gone */ } });
     $$("[data-pay-id]", sBody).forEach((btn) => btn.addEventListener("click", async () => {
       busy(btn, true, "Opening…");
