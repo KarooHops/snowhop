@@ -130,6 +130,9 @@ h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
 .cust li .lk-day{padding:0;font-weight:600}
 .setrow{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .setrow p{margin:2px 0 0;font-size:14px;color:var(--slate)}
+.sc{margin-top:10px}
+.sc .setrow > div{flex:1 1 220px}
+.sc .ok-msg ul{margin:6px 0 0;padding-left:18px;font-weight:500}
 .gate{max-width:420px;margin:30px auto 0;display:grid;gap:12px}
 .gate p{margin:0;color:var(--slate)}
 
@@ -239,7 +242,8 @@ h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
     <ul class="threads" id="threads"><li class="th-empty">Loading…</li></ul>
     <p class="err" id="supErr" hidden></p>
 
-    <h2>Look up a customer</h2>
+    <h2 id="custHead">Customers and credit</h2>
+    <p class="muted sup-note">Look up a phone number to add or take off credit, reset a PIN, or see their visits.</p>
     <div class="card">
       <div class="lookup">
         <div><label for="lkPhone">Phone number</label><input id="lkPhone" type="tel" inputmode="tel" autocomplete="off"></div>
@@ -247,6 +251,14 @@ h2 .tag{vertical-align:middle;margin-left:8px;font-family:var(--body)}
       </div>
       <p class="err" id="lkErr" hidden></p>
       <div class="cust" id="cust" hidden></div>
+    </div>
+    <div class="card sc">
+      <div class="setrow">
+        <div><b>Missed online payments</b><p>Someone paid online but their credit or visit isn't showing? This checks Stripe's last 30 days and adds anything missing.</p></div>
+        <button class="btn btn-outline" type="button" id="scGo">Check Stripe</button>
+      </div>
+      <p class="err" id="scErr" hidden></p>
+      <div class="ok-msg" id="scOk" hidden></div>
     </div>
 
     <h2>Reviews</h2>
@@ -513,7 +525,7 @@ $("#lkGo").addEventListener("click", async () => {
   try { renderCust(await api("owner_customer", { phone: ph }), ph); }
   catch (e) {
     box.hidden = true;
-    err.textContent = e.code === "not_found" ? "No SnowHop account with that number." : e.message; err.hidden = false;
+    err.textContent = e.code === "not_found" ? "No SnowHop account with that number. They need to sign up on the website first." : e.message; err.hidden = false;
   }
 });
 const LOG_NOTES = { "Given back by Ethan": "You gave it back", "Paid after the visit was canceled": "Paid after canceling", "Visit restored": "Visit restored" };
@@ -591,6 +603,28 @@ function renderCust(r, ph) {
   $("#crAdd").addEventListener("click", (e) => adjust(1, e.currentTarget));
   $("#crTake").addEventListener("click", (e) => adjust(-1, e.currentTarget));
 }
+
+// ---- missed card payments: a fail-safe for Stripe's payment notices ----
+$("#scGo").addEventListener("click", async (ev) => {
+  const btn = ev.currentTarget, er = $("#scErr"), ok = $("#scOk");
+  er.hidden = ok.hidden = true; btn.disabled = true; btn.textContent = "Checking…";
+  try {
+    const r = await capi("owner_stripe_check"), fixed = r.fixed || [], n = r.checked || 0;
+    const what = (f) => f.kind === "credit"
+      ? `$${f.credit} credit for ${f.name} (paid $${f.paid})`
+      : `${fmt(f.date, { weekday: "short", month: "short", day: "numeric" })} visit for ${f.name} marked paid ($${f.paid})`;
+    ok.innerHTML = fixed.length
+      ? `Added ${fixed.length} missing payment${fixed.length > 1 ? "s" : ""}:<ul>${fixed.map((f) => `<li>${esc(what(f))}</li>`).join("")}</ul>`
+      : n ? `All set. ${n === 1 ? "The 1 online payment" : `All ${n} online payments`} from the last 30 days ${n === 1 ? "is" : "are"} already in SnowHop.`
+      : "No online payments in the last 30 days.";
+    ok.hidden = false;
+    if (fixed.length) {
+      loadDay(true);
+      if (!$("#cust").hidden && $("#crAmt")) $("#lkGo").click(); // refresh the customer on screen
+    }
+  } catch (e) { if (e.code !== "owner") { er.textContent = e.message; er.hidden = false; } }
+  btn.disabled = false; btn.textContent = "Check Stripe";
+});
 
 // ---- reviews ----
 async function loadReviews() {

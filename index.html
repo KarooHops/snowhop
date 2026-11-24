@@ -1842,8 +1842,26 @@ if (S.token) api("me", { token: S.token }).then(setMe).catch(() => {});
 loadWeather();
 loadChat();
 document.addEventListener("visibilitychange", () => { if (!document.hidden && Date.now() - (S.availAt || 0) > 120000) loadAvailability(); });
-const qs = new URLSearchParams(location.search), paidId = qs.get("paid"), unpaidId = qs.get("unpaid"), creditBack = qs.get("credit");
-// Back from buying credit: the webhook adds it a moment after Stripe's page closes.
+const qs = new URLSearchParams(location.search), paidId = qs.get("paid"), unpaidId = qs.get("unpaid"), creditBack = qs.get("credit"), creditCs = qs.get("cs");
+function creditThanks(amount) {
+  if (S.view !== "account") return;
+  const used = S.me.credit < amount;
+  S.notice = `Thanks! ${money(amount)} credit was added to your account${used ? ", and it's already paying for your upcoming visits" : ""}.`;
+  VIEWS.account();
+}
+// Back from buying credit: SnowHop checks the payment with Stripe and adds the credit right away. If that can't
+// answer yet, watch for Stripe's own notice to add it.
+async function confirmCredit(cs) {
+  if (cs) {
+    try {
+      const r = await capi("credit_confirm", { token: S.token, session: cs });
+      setMe(r);
+      if (r.purchase) { store.set("snowhop:creditAt", null); creditThanks(r.purchase.amount); return; }
+    } catch (e) { /* fall back to watching */ }
+  }
+  watchCredit();
+}
+// Stripe's notice (the webhook) adds the credit a moment after Stripe's page closes.
 async function watchCredit() {
   const at = Number(store.get("snowhop:creditAt")) || Date.now() - 3600000;
   store.set("snowhop:creditAt", null);
@@ -1854,11 +1872,7 @@ async function watchCredit() {
     setMe(r);
     const got = S.me.credit_log.find((e) => e.kind === "purchase" && Date.parse(e.at) > at - 120000);
     if (!got) continue;
-    if (S.view === "account") {
-      const used = S.me.credit < got.amount;
-      S.notice = `Thanks! ${money(got.amount)} credit was added to your account${used ? ", and it's already paying for your upcoming visits" : ""}.`;
-      VIEWS.account();
-    }
+    creditThanks(got.amount);
     return;
   }
   if (S.view === "account") { S.notice = `Thanks for your payment! Your credit can take a minute to show up. Check back soon, or text ${OWNER} if it doesn't.`; VIEWS.account(); }
@@ -1881,7 +1895,7 @@ if ((paidId || unpaidId) && S.token) {
   if (paidId) watchPayment(paidId);
 } else if (creditBack && S.token) {
   history.replaceState(null, "", location.pathname);
-  if (creditBack === "done") { S.notice = "Thanks! Adding your credit now…"; show("account"); watchCredit(); }
+  if (creditBack === "done") { S.notice = "Thanks! Adding your credit now…"; show("account"); confirmCredit(creditCs); }
   else { store.set("snowhop:creditAt", null); S.notice = "Checkout wasn't finished, so you weren't charged."; startCredit(); }
 } else if (location.hash === "#book") startBooking();
 else if (location.hash === "#account") show(S.token ? "account" : "signin");
