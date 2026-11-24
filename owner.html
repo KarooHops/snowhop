@@ -291,6 +291,14 @@ function ymd(date) { const p = {}; for (const x of new Intl.DateTimeFormat("en-U
 const timeOf = (iso) => new Date(iso).toLocaleString("en-US", { timeZone: TZ, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 let code = store.get(KEY), day = ymd(new Date()), data = null, avail = null, timer = null;
+// The owner page link in booking and cancel emails carries the code after #code= (the part after # never reaches a server).
+// Take it, and wipe it from the address bar right away.
+const fromLink = (() => {
+  const m = /^#code=([^&]+)/.exec(location.hash || "");
+  if (!m) return "";
+  try { history.replaceState(null, "", location.pathname + location.search); } catch (e) { /* ignore */ }
+  try { return decodeURIComponent(m[1]).trim(); } catch (e) { return ""; }
+})();
 
 async function api(action, extra, url) {
   let res, body = null;
@@ -766,7 +774,21 @@ function start() {
   timer = setInterval(() => { if (!document.hidden && code) { loadDay(true); loadSupport(); } }, 60000);
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden && code && !$("#app").hidden) { loadDay(true); loadSupport(); } });
-if (code) start(); else lock("");
+async function boot() {
+  if (fromLink && fromLink !== code) {
+    const saved = code;
+    code = fromLink;
+    try { await api("owner_check"); store.set(KEY, fromLink); }
+    catch (e) {
+      if (e.code === "owner" && !saved) { lock("That email has an old owner code. Enter your current one."); return; }
+      // An old email or no connection: keep the code saved on this phone, or try the email's once the connection is back.
+      if (saved) code = saved;
+      store.set(KEY, code);
+    }
+  }
+  if (code) start(); else lock("");
+}
+boot();
 })();
 </script>
 </body>
