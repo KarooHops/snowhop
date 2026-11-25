@@ -8,4 +8,6 @@ window.SNOWHOP = {
   showSpotsLeftAt: 5,
   // The Snow watch forecast and maps center here (Highlands Ranch). radarSite is the closest NWS radar (KFTG = Denver).
   weather: { lat: 39.5437, lon: -104.9691, place: "Highlands Ranch", radarSite: "KFTG" },
+  // Demo mode: the site runs as a KarooHops demo, so nothing is booked, charged or sent. Set to false to take real bookings again.
+  demo: true,
 };

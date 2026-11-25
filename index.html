@@ -3,11 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SnowHop · Flat-rate snow removal</title>
-<meta name="description" content="Driveway and sidewalk snow clearing, $30 flat. Optional free salting. Book a day online or call or text Ethan at (303) 993-9110.">
+<title>SnowHop · A KarooHops demo</title>
+<meta name="description" content="SnowHop is a demo snow removal website built by KarooHops. Try booking, paying and signing in. Nothing is booked or charged.">
+<meta name="robots" content="noindex">
 <meta name="theme-color" content="#0B2545">
-<meta property="og:title" content="SnowHop · Flat-rate snow removal">
-<meta property="og:description" content="Driveway and sidewalk cleared for $30 flat. Optional free salting. Book a day online.">
+<meta property="og:title" content="SnowHop · A KarooHops demo">
+<meta property="og:description" content="Try every step of a booking website built by KarooHops. It's a demo, so nothing is booked or charged.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://karoohops.com/snowhop/card.png">
 <meta property="og:url" content="https://karoohops.com/snowhop/">
@@ -16,6 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap">
 <script src="config.js"></script>
+<script src="demo.js"></script>
 <style>
 :root{
   --navy:#0B2545; --ice:#7CC4FF; --blue:#1665B3; --tint:#EEF5FC; --slate:#4A5B70;
@@ -31,6 +33,12 @@ a{color:var(--blue)}
 button{font:inherit;color:inherit}
 [hidden]{display:none!important}
 .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.demo-bar{background:#C2410C;color:#fff;font-size:14px;line-height:1.4}
+.demo-bar .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 16px;padding-top:9px;padding-bottom:9px}
+.demo-bar a{color:#fff;font-weight:700;white-space:nowrap;text-underline-offset:2px}
+a[href^="tel:"]{white-space:nowrap}
+.fine{text-wrap:pretty}
+.demo-note{margin:0 0 14px;padding:12px 14px;border-radius:12px;background:#FFF3EA;color:#7C2D12;font-size:14.5px;line-height:1.45}
 .karoo{display:block;color:currentColor}
 .ico{width:20px;height:20px;flex:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -468,6 +476,7 @@ input.pin{letter-spacing:.5em;font-size:22px;font-weight:700;max-width:180px}
   <symbol id="lot-corner" viewBox="0 0 150 110"><g clip-path="url(#lot-clip)"><rect width="150" height="110" fill="#F3F7FB"/><rect y="88" width="150" height="22" fill="#C9D6E3"/><rect x="128" width="22" height="110" fill="#C9D6E3"/><path d="M4 99h118M139 4v78" stroke="#fff" stroke-width="2" stroke-dasharray="8 7"/><path d="M0 78h118V0h10v88H0z" fill="#7CC4FF"/><rect x="62" y="50" width="26" height="28" fill="#7CC4FF"/><rect x="47" y="14" width="56" height="36" rx="4" fill="#0B2545"/><path d="M47 32h56" stroke="#3D5A80" stroke-width="2"/></g></symbol>
 </svg>
 
+<div class="demo-bar" id="demoBar"><div class="wrap"><span><b>Demo site:</b> nothing here is booked, charged or sent.</span><a href="https://karoohops.com/#start">Get a site like this</a></div></div>
 <header class="top">
   <div class="wrap">
     <a class="brand" href="#top" aria-label="SnowHop home">
@@ -632,6 +641,9 @@ const API = cfg.apiUrl || cfg.bookingUrl;
 const TZ = cfg.timezone || "America/Denver";
 const WX = Object.assign({ lat: 39.7392, lon: -104.9903, place: "Denver", radarSite: "KFTG" }, cfg.weather);
 const OWNER = cfg.ownerName;
+// Demo mode (config.js `demo: true`): demo.js answers instead of the server, so nothing is booked, charged or sent.
+const DEMO = !!(cfg.demo && window.SnowHopDemo);
+if (!DEMO) { const bar = document.getElementById("demoBar"); if (bar) bar.remove(); }
 const LOW = Number.isFinite(+cfg.showSpotsLeftAt) && cfg.showSpotsLeftAt !== "" ? +cfg.showSpotsLeftAt : 5;
 const isLow = (d) => !!d && d.left > 0 && d.left <= LOW;
 const spots = (n) => (n === 1 ? "1 spot" : `${n} spots`);
@@ -663,6 +675,7 @@ const hourLabel = (h) => (h % 12 || 12) + (h < 12 || h === 24 ? " AM" : " PM");
 
 // ---- API ----
 async function api(action, data, url) {
+  if (DEMO && action !== "reviews") return demoApi(action, data, url);
   let res, body = null;
   try {
     res = await fetch(url || API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ action }, data)) });
@@ -672,6 +685,16 @@ async function api(action, data, url) {
   try { body = await res.json(); } catch (e) { /* not JSON */ }
   if (!res.ok || !body || body.ok !== true) {
     const err = Object.assign(new Error((body && body.message) || `Something went wrong. Try again, or text ${OWNER}.`), { code: (body && body.error) || "server" });
+    if (err.code === "signed_out") forgetSession();
+    throw err;
+  }
+  if (DEMO && action === "reviews") SnowHopDemo.setReviews(body);
+  return body;
+}
+async function demoApi(action, data, url) {
+  const body = await SnowHopDemo.call(action, Object.assign({ action }, data), url || API);
+  if (!body || body.ok !== true) {
+    const err = Object.assign(new Error((body && body.message) || "Something went wrong. Try again."), { code: (body && body.error) || "server" });
     if (err.code === "signed_out") forgetSession();
     throw err;
   }
@@ -1131,7 +1154,8 @@ const VIEWS = {
 
   done() {
     const b = S.lastBooking || {}, cu = Number(b.credit_used) || 0, due = Number(b.due) || 0;
-    const payText = b.pay_status === "paid" && cu > 0 ? `Paid with ${money(cu)} of your SnowHop credit`
+    const payText = b.pay_status === "paid" && b.paid_online ? `Paid ${money(b.paid_amount)} online${cu ? ` · ${money(cu)} credit used` : ""}`
+      : b.pay_status === "paid" && cu > 0 ? `Paid with ${money(cu)} of your SnowHop credit`
       : (cu ? `${money(cu)} credit used · ` : "") + (b.pay_choice === "later" ? `Pay ${money(due)} after the job${b.pay_plan ? ` · ${PLAN_LABEL[b.pay_plan]}` : ""}` : `${money(due)} to pay online`);
     sBody.innerHTML = `
       <div class="done">
@@ -1142,6 +1166,7 @@ const VIEWS = {
         <p>${esc(payText)}</p>
       </div>
       ${S.payNote ? `<p class="form-error" style="margin:0 0 14px">${esc(S.payNote)}</p>` : ""}
+      ${DEMO ? `<p class="demo-note">This is a demo, so nothing was booked or charged. On your own KarooHops site, you'd get an email about this booking right away.</p>` : ""}
       ${b.id && b.date ? (() => { const cal = visitCal(b); return `<div class="cal-add"><span class="legend">Add it to your calendar</span><div class="cal-btns">
         <a class="btn btn-outline" id="calGoogle" href="${esc(cal.google)}" target="_blank" rel="noopener"><svg aria-hidden="true"><use href="#cal"></use></svg>Google</a>
         <a class="btn btn-outline" id="calIcs" href="${cal.ics}" download="${cal.file}"><svg aria-hidden="true"><use href="#cal"></use></svg>Apple / Outlook</a></div></div>`; })() : ""}
@@ -1224,6 +1249,7 @@ const VIEWS = {
     const logDay = (at) => new Date(at).toLocaleDateString("en-US", { timeZone: TZ, month: "short", day: "numeric" });
     sBody.innerHTML = `
       ${S.notice ? `<p class="form-ok">${esc(S.notice)}</p>` : ""}
+      ${DEMO ? `<p class="demo-note">Demo account: it only lasts in this browser tab.</p>` : ""}
       <div class="acct">
         <div><b>${esc(c.name)}</b><p>${esc(c.street)}${c.city || c.zip ? `, ${esc([c.city, c.zip].filter(Boolean).join(" "))}` : ""}</p><p>${esc(fmtPhone(c.phone))}</p>
         <span class="tag">${c.corner_lot ? `Corner house · $${p.corner}` : `Standard lot · $${p.base}`}</span></div>
@@ -1258,7 +1284,11 @@ const VIEWS = {
     $("#signOut").addEventListener("click", async () => { const tk = S.token; forgetSession(); closeSheet(); try { await api("logout", { token: tk }); } catch (e) { /* already gone */ } });
     $$("[data-pay-id]", sBody).forEach((btn) => btn.addEventListener("click", async () => {
       busy(btn, true, "Opening…");
-      try { location.href = (await capi("pay", { token: S.token, id: btn.dataset.payId })).url; }
+      try {
+        const r = await capi("pay", { token: S.token, id: btn.dataset.payId });
+        if (r.url) { location.href = r.url; return; }
+        setMe(r); S.notice = r.notice || ""; VIEWS.account();
+      }
       catch (e) { busy(btn, false); showErr(e.message); }
     }));
     $$("[data-cancel]", sBody).forEach((btn) => btn.addEventListener("click", () => {
@@ -1327,7 +1357,9 @@ const VIEWS = {
           S.flow = null;
         }
         store.set("snowhop:creditAt", String(Date.now()));
-        location.href = (await capi("buy_credit", { token: S.token, pay: p.pay })).url;
+        const r = await capi("buy_credit", { token: S.token, pay: p.pay });
+        if (r.url) { location.href = r.url; return; }
+        store.set("snowhop:creditAt", null); setMe(r); S.flow = null; S.notice = r.notice || ""; show("account");
       } catch (e) {
         busy(go, false);
         if (e.code === "phone_taken") {
@@ -1403,7 +1435,7 @@ const VIEWS = {
       showErr(""); busy(go, true, "Posting…");
       try {
         const r = await api("review", { token: S.token, rating, comment: S.draft.comment || "" });
-        setMe(r); S.reviews = r.reviews; renderReviews(); S.notice = "Thanks! Your review is up."; show("account");
+        setMe(r); S.reviews = r.reviews; renderReviews(); S.notice = DEMO ? "Demo: your review shows on this page, but only for you. Nothing was posted." : "Thanks! Your review is up."; show("account");
       } catch (e) { busy(go, false); showErr(e.message); }
     });
   },
@@ -1439,8 +1471,8 @@ async function submitBooking() {
       try {
         busy(go, true, "Opening payment…");
         const p = await capi("pay", { token: S.token, id: r.booking.id });
-        location.href = p.url;
-        return;
+        if (p.url) { location.href = p.url; return; }
+        setMe(p); S.lastBooking = Object.assign({}, S.lastBooking, p.booking);
       } catch (e) {
         S.payNote = "Your visit is booked, but the payment page didn't open. You can pay from My visits, or after the job.";
       }
